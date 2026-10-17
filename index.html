@@ -1,0 +1,1076 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title id="page-title">
+      T-Auto | Cho Thuê Xe Tự Lái Uy Tín & Kiểm Tra Lịch Rảnh Trực Tuyến
+    </title>
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23f59e0b'><path d='M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.5 2.8C1.4 11.2 1 12 1 13v3c0 .6.4 1 1 1h2'/><circle cx='7' cy='17' r='2'/><path d='M9 17h6'/><circle cx='17' cy='17' r='2'/></svg>"
+    />
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  </head>
+  <body>
+    <!-- 1. HEADER NAVBAR (Đã ẩn nút Demo sang Admin, giữ giao diện Khách sạch sẽ) -->
+    <header class="navbar">
+      <div class="container nav-inner">
+        <div class="brand" onclick="switchView('customer')">
+          <div class="brand-logo">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.5 2.8C1.4 11.2 1 12 1 13v3c0 .6.4 1 1 1h2"
+              />
+              <circle cx="7" cy="17" r="2" />
+              <path d="M9 17h6" />
+              <circle cx="17" cy="17" r="2" />
+            </svg>
+          </div>
+          <div class="brand-text">
+            <h1 id="nav-store-name">Cửa Hàng Cho Thuê Xe T-Auto</h1>
+            <span class="brand-sub">✨ CHO THUÊ XE TỰ LÁI UY TÍN</span>
+          </div>
+        </div>
+
+        <nav class="nav-links">
+          <a href="#vehicle-catalog-section" onclick="switchView('customer')"
+            >Danh Sách Xe</a
+          >
+          <a href="#hero-search-box" onclick="switchView('customer')"
+            >Kiểm Tra Lịch Rảnh</a
+          >
+          <a href="#policy-section" onclick="switchView('customer')"
+            >Thủ Tục Thuê Xe</a
+          >
+        </nav>
+
+        <div class="nav-actions">
+          <a href="tel:0987654321" id="nav-hotline-link" class="btn-hotline">
+            <span class="dot-live"></span>
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.2"
+            >
+              <path
+                d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"
+              />
+            </svg>
+            <span
+              >Hotline:
+              <strong id="nav-hotline-text">0987.654.321</strong></span
+            >
+          </a>
+
+          <button
+            class="btn-admin-shield"
+            onclick="handleAdminClick()"
+            title="Quản trị hệ thống"
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- 2. BANNER THÔNG BÁO GIÁ CUỐI TUẦN / LỄ -->
+    <div class="top-banner">
+      <div class="container top-banner-inner">
+        <span class="banner-badge">THÔNG BÁO</span>
+        <span id="banner-note-text"
+          >Liên hệ để biết giá ngày cuối tuần và ngày Lễ</span
+        >
+        <a href="tel:0987654321" id="banner-hotline-link" class="banner-call"
+          >Gọi ngay: 0987.654.321 &rarr;</a
+        >
+      </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- GIAO DIỆN KHÁCH HÀNG (CUSTOMER VIEW)                              -->
+    <!-- ================================================================= -->
+    <div id="customer-view">
+      <!-- 3. HERO SECTION & FLOATING SEARCH CARD -->
+      <section class="hero-section">
+        <div class="hero-glow-left"></div>
+        <div class="hero-glow-right"></div>
+
+        <div class="container hero-container">
+          <div class="hero-badge">
+            <span>⚡ Hệ Thống Đặt Thuê Xe Trực Tuyến 24/7</span>
+          </div>
+
+          <h2 id="hero-title-display" class="hero-title">
+            Dịch Vụ Cho Thuê Xe Tự<br />Lái Uy Tín &amp; Tiện Lợi
+          </h2>
+
+          <p id="hero-subtitle-display" class="hero-subtitle">
+            Cung cấp các dòng xe đời mới chất lượng cao, sạch sẽ, máy êm. Thủ
+            tục nhận xe nhanh chóng chỉ trong 5 phút.
+          </p>
+
+          <div id="hero-search-box" class="search-card">
+            <div class="search-card-header">
+              <span class="calendar-icon">📅</span>
+              <div>
+                <h3>Chọn Thời Gian Thuê Để Tìm Xe Đang Rảnh</h3>
+                <p>
+                  Hệ thống sẽ tự động quét và chỉ hiển thị các xe còn trống lịch
+                  trong khung thời gian bạn chọn.
+                </p>
+              </div>
+            </div>
+
+            <div class="search-inputs-grid">
+              <div class="input-box">
+                <label>🕒 NGÀY &amp; GIỜ NHẬN XE</label>
+                <input type="datetime-local" id="search-start" />
+              </div>
+
+              <div class="input-box">
+                <label>🕒 NGÀY &amp; GIỜ TRẢ XE</label>
+                <input type="datetime-local" id="search-end" />
+              </div>
+
+              <div class="input-box">
+                <label>🚗 PHÂN LOẠI XE</label>
+                <select
+                  id="search-category"
+                  onchange="syncCategoryFilter(this.value)"
+                >
+                  <option value="all">Tất cả dòng xe</option>
+                  <option value="car">Ô tô tự lái (Sedan/SUV/MPV)</option>
+                  <option value="electric">Xe ô tô điện</option>
+                  <option value="motorbike">Xe máy / Xe tay ga</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="search-card-footer">
+              <div class="commit-text">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#10b981"
+                  stroke-width="2.5"
+                >
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                  <path d="m9 12 2 2 4-4" />
+                </svg>
+                <span>Cam kết xe sạch sẽ, bàn giao đúng giờ 100%</span>
+              </div>
+
+              <div class="search-btn-group">
+                <button
+                  type="button"
+                  class="btn-secondary"
+                  onclick="handleResetSearch()"
+                >
+                  Xem Tất Cả Xe
+                </button>
+                <button
+                  type="button"
+                  class="btn-amber-search"
+                  onclick="handlePerformSearch()"
+                >
+                  <svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                  >
+                    <circle cx="11" cy="11" r="8" />
+                    <path d="m21 21-4.3-4.3" />
+                  </svg>
+                  <span>Tìm Xe Rảnh Ngay</span>
+                  <span>&rarr;</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. DANH SÁCH XE -->
+      <main id="vehicle-catalog-section" class="catalog-section container">
+        <div class="catalog-header">
+          <div>
+            <span class="section-tag">✨ BỘ SƯU TẬP XE SẴN SÀNG BÀN GIAO</span>
+            <h2 class="section-title">
+              Danh Sách Các Loại Xe Cửa Hàng Đang Có
+            </h2>
+            <p class="section-desc">
+              Bấm vào từng xe để phóng to xem chi tiết 4 mặt xe (Trước, Sau,
+              Hông, Nội thất) và đặt giữ xe.
+            </p>
+          </div>
+
+          <div id="active-search-banner" class="active-filter-badge hidden">
+            <span
+              >✅ Đang hiển thị tình trạng xe theo khung giờ bạn đã chọn</span
+            >
+            <button onclick="handleResetSearch()">Xóa lọc</button>
+          </div>
+        </div>
+
+        <div class="filter-bar">
+          <div class="category-tabs" id="category-tabs">
+            <button
+              class="tab-btn active"
+              data-cat="all"
+              onclick="setCategory('all')"
+            >
+              Tất Cả (<span id="count-all">0</span>)
+            </button>
+            <button class="tab-btn" data-cat="car" onclick="setCategory('car')">
+              🚗 Ô Tô Tự Lái (<span id="count-car">0</span>)
+            </button>
+            <button
+              class="tab-btn"
+              data-cat="electric"
+              onclick="setCategory('electric')"
+            >
+              ⚡ Xe Ô Tô Điện (<span id="count-electric">0</span>)
+            </button>
+            <button
+              class="tab-btn"
+              data-cat="motorbike"
+              onclick="setCategory('motorbike')"
+            >
+              🛵 Xe Máy / Tay Ga (<span id="count-motorbike">0</span>)
+            </button>
+          </div>
+
+          <div class="sub-filters">
+            <div class="sub-filter-item">
+              <span>Chỗ ngồi:</span>
+              <select id="filter-seats" onchange="renderVehiclesGrid()">
+                <option value="all">Tất cả</option>
+                <option value="2">2 chỗ (Xe máy)</option>
+                <option value="4-5">4 - 5 chỗ (Sedan/SUV)</option>
+                <option value="7">7 chỗ (MPV/SUV)</option>
+              </select>
+            </div>
+
+            <div class="sub-filter-item">
+              <span>Sắp xếp giá:</span>
+              <select id="filter-price-order" onchange="renderVehiclesGrid()">
+                <option value="default">Mặc định</option>
+                <option value="asc">Giá thấp đến cao</option>
+                <option value="desc">Giá cao đến thấp</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div id="vehicles-grid" class="vehicles-grid"></div>
+      </main>
+
+      <!-- 5. THỦ TỤC & QUY ĐỊNH THUÊ XE -->
+      <section id="policy-section" class="policy-section">
+        <div class="container">
+          <div class="policy-header">
+            <span class="section-tag">MINH BẠCH &amp; AN TÂM TUYỆT ĐỐI</span>
+            <h2 class="section-title">Thủ Tục &amp; Quy Định Thuê Xe</h2>
+            <p class="section-desc">
+              Quy trình nhận xe đơn giản chỉ trong 5 phút. Chúng tôi hỗ trợ tối
+              đa để quý khách có chuyến đi thuận lợi nhất.
+            </p>
+          </div>
+
+          <div class="policy-grid">
+            <div class="policy-card">
+              <div class="policy-icon icon-amber">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path
+                    d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                  />
+                  <polyline points="14 2 14 8 20 8" />
+                  <line x1="16" y1="13" x2="8" y2="13" />
+                  <line x1="16" y1="17" x2="8" y2="17" />
+                </svg>
+              </div>
+              <h4>1. Giấy Tờ Cần Thiết</h4>
+              <div class="policy-text">
+                1. Căn cước công dân gắn chip hoặc hộ chiếu còn hạn.<br />
+                2. Giấy phép lái xe hợp lệ (B1/B2 cho ô tô, A1/A2 cho xe
+                máy).<br />
+                3. Xe được kiểm tra vệ sinh sạch sẽ, đầy đủ giấy tờ đăng kiểm và
+                bảo hiểm trước khi bàn giao.<br />
+                4. Quý khách vui lòng bàn giao xe đúng giờ và giữ gìn vệ sinh
+                xe.
+              </div>
+            </div>
+
+            <div class="policy-card">
+              <div class="policy-icon icon-emerald">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <circle cx="8" cy="8" r="6" />
+                  <path d="M18.09 10.37A6 6 0 1 1 10.34 18" />
+                  <path d="M7 6h1v4" />
+                  <path d="m16.71 13.88.7.71-2.82 2.82" />
+                </svg>
+              </div>
+              <h4>2. Quy Định Đặt Cọc</h4>
+              <div class="policy-text">
+                Đặt cọc 10.000.000đ tiền mặt (hoặc xe máy chính chủ có cà vẹt
+                giá trị tương đương). Hoàn cọc ngay khi trả xe.
+              </div>
+            </div>
+
+            <div class="policy-card">
+              <div class="policy-icon icon-blue">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <line x1="3" y1="22" x2="15" y2="22" />
+                  <line x1="4" y1="9" x2="14" y2="9" />
+                  <path d="M14 22V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v18" />
+                  <path
+                    d="M14 13h2a2 2 0 0 1 2 2v2a2 2 0 0 0 2 2h0a2 2 0 0 0 2-2V9.83a2 2 0 0 0-.59-1.42L18 5"
+                  />
+                </svg>
+              </div>
+              <h4>3. Nhiên Liệu &amp; Vệ Sinh</h4>
+              <div class="policy-text">
+                Xe được rửa sạch và kiểm tra kỹ thuật trước khi bàn giao. Quý
+                khách vui lòng bàn giao lại xe cùng mức nhiên liệu như lúc nhận.
+              </div>
+            </div>
+
+            <div class="policy-card policy-card-highlight">
+              <div class="policy-icon icon-gold">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12 6 12 12 16 14" />
+                </svg>
+              </div>
+              <h4 class="highlight-title">4. Giá Lễ &amp; Cuối Tuần</h4>
+              <div class="policy-text highlight-text" id="policy-weekend">
+                Liên hệ để biết giá ngày cuối tuần và ngày Lễ
+              </div>
+              <a
+                href="tel:0987654321"
+                id="policy-call-link"
+                class="policy-call-btn"
+              >
+                📞 Gọi báo giá ngay (0987.654.321)
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- GIAO DIỆN QUẢN TRỊ VIÊN (ADMIN DASHBOARD VIEW)                    -->
+    <!-- ================================================================= -->
+    <div id="admin-view" class="admin-section container hidden">
+      <div class="admin-topbar">
+        <div>
+          <span class="section-tag">QUẢN TRỊ HỆ THỐNG</span>
+          <h2 class="section-title">Bảng Điều Khiển Admin T-Auto</h2>
+        </div>
+        <div class="admin-top-actions">
+          <!-- Nút Chế độ Demo / Supabase đã được dời vào riêng trong Admin -->
+          <button
+            id="btn-db-mode"
+            class="btn-demo-mode"
+            onclick="openSupabaseModal()"
+          >
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <ellipse cx="12" cy="5" rx="9" ry="3" />
+              <path d="M3 5V19A9 3 0 0 0 21 19V5" />
+              <path d="M3 12A9 3 0 0 0 21 12" />
+            </svg>
+            <span id="db-mode-label">Chế Độ Mẫu (Demo)</span>
+          </button>
+          <button class="btn-secondary" onclick="switchView('customer')">
+            &larr; Xem Trang Khách
+          </button>
+          <button class="btn-danger-outline" onclick="adminLogout()">
+            Đăng Xuất
+          </button>
+        </div>
+      </div>
+
+      <div class="admin-tabs">
+        <button
+          class="adm-tab active"
+          data-tab="tab-vehicles"
+          onclick="switchAdminTab('tab-vehicles')"
+        >
+          🚗 Quản Lý Kho Xe (<span id="adm-count-cars">0</span>)
+        </button>
+        <button
+          class="adm-tab"
+          data-tab="tab-bookings"
+          onclick="switchAdminTab('tab-bookings')"
+        >
+          🛒 Đơn Đặt Thuê Xe (<span id="adm-count-bookings">0</span>)
+        </button>
+        <button
+          class="adm-tab"
+          data-tab="tab-waitlist"
+          onclick="switchAdminTab('tab-waitlist')"
+        >
+          🔔 Khách Chờ Xe Trống (<span id="adm-count-waitlist">0</span>)
+        </button>
+        <button
+          class="adm-tab"
+          data-tab="tab-settings"
+          onclick="switchAdminTab('tab-settings')"
+        >
+          📝 Nội Dung &amp; Đổi Mật Khẩu Hash
+        </button>
+      </div>
+
+      <!-- TAB 1: QUẢN LÝ XE -->
+      <div id="tab-vehicles" class="admin-panel">
+        <div class="admin-card">
+          <h3 id="car-form-heading" class="card-heading">
+            ➕ Thêm Xe Mới Vào Cửa Hàng
+          </h3>
+          <form id="vehicle-form" onsubmit="handleSaveVehicle(event)">
+            <input type="hidden" id="veh-id" />
+            <div class="adm-form-grid">
+              <div class="form-field">
+                <label>Tên xe (*)</label>
+                <input
+                  type="text"
+                  id="veh-name"
+                  required
+                  placeholder="VD: Mazda 3 Luxury 2024"
+                />
+              </div>
+              <div class="form-field">
+                <label>Phân loại xe (*)</label>
+                <select id="veh-category">
+                  <option value="car">🚗 Ô tô tự lái</option>
+                  <option value="electric">⚡ Xe ô tô điện</option>
+                  <option value="motorbike">🛵 Xe máy / Tay ga</option>
+                </select>
+              </div>
+              <div class="form-field">
+                <label>Số chỗ ngồi (*)</label>
+                <input
+                  type="number"
+                  id="veh-seats"
+                  value="5"
+                  min="2"
+                  max="16"
+                  required
+                />
+              </div>
+              <div class="form-field">
+                <label>Hộp số / Truyền động</label>
+                <input type="text" id="veh-transmission" value="Số tự động" />
+              </div>
+              <div class="form-field">
+                <label>Nhiên liệu</label>
+                <input type="text" id="veh-fuel" value="Xăng" />
+              </div>
+              <div class="form-field">
+                <label>Giá thuê ngày thường (VNĐ/ngày) (*)</label>
+                <input
+                  type="number"
+                  id="veh-price"
+                  required
+                  placeholder="850000"
+                />
+              </div>
+              <div class="form-field">
+                <label>Giá Cuối Tuần / Ngày Lễ (VNĐ/ngày)</label>
+                <input
+                  type="number"
+                  id="veh-weekend-price"
+                  placeholder="1000000"
+                />
+              </div>
+              <div class="form-field">
+                <label>Trạng thái xe hiện tại</label>
+                <select id="veh-status">
+                  <option value="available">🟢 Đang rảnh (Sẵn sàng)</option>
+                  <option value="rented">🔴 Đang có khách thuê</option>
+                  <option value="maintenance">
+                    🟡 Đang bảo dưỡng / Tạm ngưng
+                  </option>
+                </select>
+              </div>
+              <div class="form-field full-span">
+                <label
+                  >Danh sách 4 Link Ảnh của 4 mặt xe: Mặt trước, Mặt sau, Bên
+                  hông, Nội thất (Cách nhau dấu phẩy `,`)</label
+                >
+                <textarea
+                  id="veh-images"
+                  rows="3"
+                  placeholder="https://anh-mat-truoc.jpg, https://anh-mat-sau.jpg, https://anh-ben-hong.jpg, https://anh-noi-that.jpg"
+                ></textarea>
+              </div>
+              <div class="form-field full-span">
+                <label>Mô tả &amp; Tiện ích xe</label>
+                <textarea
+                  id="veh-desc"
+                  rows="2"
+                  placeholder="Xe đời mới, trang bị sẵn VietMap S2, Camera 360, Bảo hiểm 2 chiều..."
+                ></textarea>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn-primary-amber">
+                💾 Lưu Thông Tin Xe
+              </button>
+              <button
+                type="button"
+                class="btn-secondary"
+                onclick="resetVehicleForm()"
+              >
+                Làm Mới / Hủy Sửa
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div class="admin-card">
+          <h3 class="card-heading">📋 Danh Sách Xe Hiện Có</h3>
+          <div class="table-wrap">
+            <table class="adm-table">
+              <thead>
+                <tr>
+                  <th>Hình ảnh (4 mặt)</th>
+                  <th>Tên xe &amp; Thông số</th>
+                  <th>Giá Thường / Giá Lễ</th>
+                  <th>Trạng thái nhanh</th>
+                  <th>Hành động</th>
+                </tr>
+              </thead>
+              <tbody id="adm-vehicles-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: ĐƠN ĐẶT THUÊ XE -->
+      <div id="tab-bookings" class="admin-panel hidden">
+        <div class="admin-card">
+          <h3 class="card-heading">🛒 Danh Sách Đơn Khách Đặt Thuê Xe</h3>
+          <p class="card-sub">
+            Duyệt đơn để khóa lịch xe tự động, hoặc đánh dấu Đã trả xe / Hủy đơn
+            để giải phóng lịch trống.
+          </p>
+          <div id="adm-bookings-container" class="records-list"></div>
+        </div>
+      </div>
+
+      <!-- TAB 3: KHÁCH CHỜ XE TRỐNG -->
+      <div id="tab-waitlist" class="admin-panel hidden">
+        <div class="admin-card">
+          <h3 class="card-heading">
+            🔔 Danh Sách Khách Để Lại Thông Tin Chờ Xe Trống
+          </h3>
+          <p class="card-sub">
+            Khi xe khách cần đã rảnh lịch, hãy liên hệ lại theo số điện thoại
+            bên dưới.
+          </p>
+          <div id="adm-waitlist-container" class="records-list"></div>
+        </div>
+      </div>
+
+      <!-- TAB 4: QUẢN TRỊ NỘI DUNG & ĐỔI PASS HASH -->
+      <div id="tab-settings" class="admin-panel hidden">
+        <div class="admin-card">
+          <h3 class="card-heading">
+            📝 Quản Trị Nội Dung Chung &amp; Thông Báo Giá
+          </h3>
+          <form onsubmit="handleSaveSettings(event)" class="adm-form-grid">
+            <div class="form-field">
+              <label>Tên Cửa Hàng</label>
+              <input type="text" id="set-store-name" required />
+            </div>
+            <div class="form-field">
+              <label>Số Hotline Liên Hệ</label>
+              <input type="text" id="set-hotline" required />
+            </div>
+            <div class="form-field">
+              <label>Địa Chỉ Cửa Hàng</label>
+              <input type="text" id="set-address" required />
+            </div>
+            <div class="form-field">
+              <label>Chế Độ Hiển Thị Giá Trên Web</label>
+              <select id="set-price-mode">
+                <option value="normal">Hiển thị Giá Ngày Thường</option>
+                <option value="weekend">Áp dụng Giá Cuối Tuần / Ngày Lễ</option>
+              </select>
+            </div>
+            <div class="form-field full-span">
+              <label>Tiêu đề lớn (Hero Title)</label>
+              <input type="text" id="set-hero-title" required />
+            </div>
+            <div class="form-field full-span">
+              <label>Mô tả phụ (Hero Subtitle)</label>
+              <input type="text" id="set-hero-subtitle" required />
+            </div>
+            <div class="form-field full-span">
+              <label>Ghi chú Giá Lễ &amp; Cuối Tuần</label>
+              <input type="text" id="set-weekend-note" required />
+            </div>
+            <div class="form-actions full-span">
+              <button type="submit" class="btn-primary-amber">
+                💾 Lưu Toàn Bộ Nội Dung
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Khối Đổi mật khẩu bằng mã băm SHA-256 chống F12 -->
+        <div class="admin-card">
+          <h3 class="card-heading">
+            🔐 Đổi Mật Khẩu Quản Trị (Mã Hóa SHA-256 Chống Soi F12)
+          </h3>
+          <p class="card-sub">
+            Mật khẩu của bạn sẽ được băm thành chuỗi Hash SHA-256 không thể dịch
+            ngược. Người lạ mở F12 cũng không thể biết mật khẩu thực.
+          </p>
+          <form
+            onsubmit="handleChangeAdminPassword(event)"
+            class="adm-form-grid"
+          >
+            <div class="form-field">
+              <label>Nhập mật khẩu mới muốn đổi (*)</label>
+              <input
+                type="password"
+                id="new-admin-pass"
+                required
+                placeholder="Nhập mật khẩu mới..."
+              />
+            </div>
+            <div class="form-field">
+              <label>Mã Hash SHA-256 tương ứng (Tự động sinh ra)</label>
+              <input
+                type="text"
+                id="generated-hash-preview"
+                readonly
+                placeholder="Mã Hash sẽ hiện ở đây sau khi bấm lưu..."
+              />
+            </div>
+            <div class="form-actions full-span">
+              <button type="submit" class="btn-primary-amber">
+                🔒 Mã Hóa &amp; Cập Nhật Mật Khẩu
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+      <div class="container footer-grid">
+        <div>
+          <div class="brand-footer">
+            <div class="brand-logo">🚗</div>
+            <h3 id="footer-store-name">Cửa Hàng Cho Thuê Xe T-Auto</h3>
+          </div>
+          <p class="footer-desc">
+            Dịch vụ cho thuê xe ô tô tự lái, ô tô điện và xe máy uy tín. Kiểm
+            tra lịch rảnh trực tuyến 24/7, thủ tục minh bạch, giao nhận xe tận
+            nơi.
+          </p>
+        </div>
+        <div>
+          <h4>Liên Hệ Cửa Hàng</h4>
+          <ul class="footer-list">
+            <li>
+              📍 Địa chỉ:
+              <span id="footer-address">Bình Dương &amp; TP. Hồ Chí Minh</span>
+            </li>
+            <li>
+              📞 Hotline/Zalo: <strong id="footer-hotline">0987.654.321</strong>
+            </li>
+            <li>🕒 Giờ làm việc: Giao nhận xe 24/7 (Kể cả Lễ &amp; CN)</li>
+          </ul>
+        </div>
+        <div>
+          <h4>Hệ Thống Quản Lý</h4>
+          <p class="footer-desc">
+            Dành riêng cho quản trị viên cửa hàng cập nhật xe và duyệt lịch.
+          </p>
+          <button class="btn-footer-admin" onclick="handleAdminClick()">
+            🔐 Quản Trị Viên
+          </button>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        &copy; 2026 T-Auto. Hệ thống cho thuê xe trực tuyến.
+      </div>
+    </footer>
+
+    <!-- ================================================================= -->
+    <!-- MODAL 1: XEM TO RÕ 4 MẶT XE (GALLERY LIGHTBOX MODAL)              -->
+    <!-- ================================================================= -->
+    <div id="gallery-modal" class="modal-overlay hidden">
+      <div class="modal-box modal-gallery-xl">
+        <button class="modal-close" onclick="closeGalleryModal()">
+          &times;
+        </button>
+
+        <div class="gallery-layout">
+          <!-- Cột Trái: Khung ảnh lớn + Nút Prev/Next + 4 Thumbnail -->
+          <div class="gallery-viewer">
+            <div class="main-stage">
+              <span id="gal-angle-badge" class="angle-label"
+                >Góc 1/4: Mặt trước</span
+              >
+              <img id="gal-main-img" src="" alt="Chi tiết xe" />
+              <button
+                type="button"
+                class="gal-nav-btn gal-prev"
+                onclick="changeGallerySlide(-1)"
+              >
+                &#10094;
+              </button>
+              <button
+                type="button"
+                class="gal-nav-btn gal-next"
+                onclick="changeGallerySlide(1)"
+              >
+                &#10095;
+              </button>
+            </div>
+            <div id="gal-thumbs-row" class="thumbs-row"></div>
+          </div>
+
+          <!-- Cột Phải: Thông số chi tiết xe & Nút Đặt thuê ngay -->
+          <div class="gallery-info">
+            <span class="modal-tag">CHI TIẾT 4 MẶT XE &amp; THÔNG SỐ</span>
+            <h3 id="gal-car-name" class="gal-title">Tên Xe</h3>
+            <div id="gal-car-price" class="gal-price"></div>
+
+            <div id="gal-specs-list" class="gal-specs-box"></div>
+
+            <div class="gal-desc-box">
+              <strong>Mô tả &amp; Tiện ích theo xe:</strong>
+              <p id="gal-car-desc"></p>
+            </div>
+
+            <div id="gal-status-box" class="avail-status-box"></div>
+
+            <div class="gal-cta-group">
+              <button id="gal-book-btn" class="btn-bhx-submit full-width">
+                🛒 CHỌN THUÊ XE NÀY NGAY
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- MODAL 2: ĐẶT XE ONLINE KIỂU MUA HÀNG BÁCH HÓA XANH                -->
+    <!-- ================================================================= -->
+    <div id="booking-modal" class="modal-overlay hidden">
+      <div class="modal-box modal-bhx">
+        <button class="modal-close" onclick="closeBookingModal()">
+          &times;
+        </button>
+
+        <!-- Header kiểu Bách Hóa Xanh -->
+        <div class="bhx-header">
+          <span class="bhx-badge" id="bhx-mode-badge"
+            >🛒 PHIẾU ĐĂNG KÝ THUÊ XE NHANH</span
+          >
+          <h3 id="bhx-modal-title">Thông Tin Đặt Giữ Xe</h3>
+        </div>
+
+        <!-- Khối 1: Tóm tắt "Giỏ hàng" (Xe đã chọn + Thời gian + Tự động tính tổng tiền) -->
+        <div class="bhx-cart-summary">
+          <img id="bhx-car-thumb" src="" alt="Xe" class="bhx-thumb" />
+          <div class="bhx-cart-info">
+            <h4 id="bhx-car-name">Tên xe</h4>
+            <div class="bhx-unit-price">
+              Đơn giá: <strong id="bhx-day-price">0đ</strong>/ngày
+            </div>
+            <span id="bhx-avail-pill" class="bhx-status-pill"
+              >Đang kiểm tra...</span
+            >
+          </div>
+        </div>
+
+        <!-- Khối 2: Chọn Thời Gian Nhận & Trả Xe -->
+        <div class="bhx-section-box">
+          <div class="bhx-step-title">1. Thời gian nhận &amp; trả xe</div>
+          <div class="modal-date-checker">
+            <div class="form-field">
+              <label>🕒 Nhận xe lúc:</label>
+              <input
+                type="datetime-local"
+                id="modal-start"
+                onchange="evaluateModalAvailability()"
+              />
+            </div>
+            <div class="form-field">
+              <label>🕒 Trả xe lúc:</label>
+              <input
+                type="datetime-local"
+                id="modal-end"
+                onchange="evaluateModalAvailability()"
+              />
+            </div>
+          </div>
+
+          <!-- Dòng tổng kết số ngày & Thành tiền giống Bách Hóa Xanh -->
+          <div class="bhx-bill-row">
+            <span
+              >Thời gian thuê: <strong id="bhx-total-days">1 ngày</strong></span
+            >
+            <span
+              >Tạm tính:
+              <strong id="bhx-total-money" class="bhx-money-highlight"
+                >0đ</strong
+              ></span
+            >
+          </div>
+        </div>
+
+        <!-- Thông báo khi xe bận (Chuyển sang để lại thông tin chờ) -->
+        <div id="modal-avail-banner" class="avail-status-box"></div>
+
+        <!-- Khối 3: Thông tin người đặt & Hình thức nhận xe (Chuẩn Bách Hóa Xanh) -->
+        <form id="customer-action-form" onsubmit="handleCustomerSubmit(event)">
+          <input type="hidden" id="modal-car-id" />
+          <input type="hidden" id="modal-action-mode" />
+
+          <div class="bhx-section-box">
+            <div class="bhx-step-title">2. Thông tin khách hàng</div>
+
+            <!-- Chọn Anh / Chị -->
+            <div class="bhx-gender-row">
+              <label class="bhx-radio">
+                <input type="radio" name="cust_title" value="Anh" checked />
+                <span>Anh</span>
+              </label>
+              <label class="bhx-radio">
+                <input type="radio" name="cust_title" value="Chị" />
+                <span>Chị</span>
+              </label>
+            </div>
+
+            <div class="bhx-input-grid">
+              <div class="form-field">
+                <input
+                  type="text"
+                  id="cust-name"
+                  required
+                  placeholder="Họ và tên của bạn (Bắt buộc)"
+                />
+              </div>
+              <div class="form-field">
+                <input
+                  type="tel"
+                  id="cust-phone"
+                  required
+                  placeholder="Số điện thoại liên hệ (Bắt buộc)"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="bhx-section-box">
+            <div class="bhx-step-title">3. Chọn cách nhận xe</div>
+            <div class="bhx-delivery-tabs">
+              <label class="bhx-deliv-option">
+                <input
+                  type="radio"
+                  name="delivery_type"
+                  value="Nhận tại cửa hàng"
+                  checked
+                  onchange="toggleDeliveryAddress(false)"
+                />
+                <span>🏪 Nhận xe tại cửa hàng</span>
+              </label>
+              <label class="bhx-deliv-option">
+                <input
+                  type="radio"
+                  name="delivery_type"
+                  value="Giao xe tận nơi"
+                  onchange="toggleDeliveryAddress(true)"
+                />
+                <span>🚚 Giao xe tận nơi</span>
+              </label>
+            </div>
+
+            <div
+              id="delivery-address-wrap"
+              class="form-field hidden"
+              style="margin-top: 10px"
+            >
+              <input
+                type="text"
+                id="cust-address"
+                placeholder="Nhập số nhà, tên đường, phường/xã nhận xe..."
+              />
+            </div>
+
+            <div class="form-field" style="margin-top: 10px; margin-bottom: 0">
+              <input
+                type="text"
+                id="cust-note"
+                placeholder="Yêu cầu khác (VD: Gọi qua Zalo, xuất hóa đơn, giờ giấc linh hoạt...)"
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            id="modal-submit-btn"
+            class="btn-bhx-submit full-width"
+          >
+            HOÀN TẤT ĐẶT GIỮ XE
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- MODAL 3: ĐĂNG NHẬP ADMIN (BẢO MẬT BẰNG HASH SHA-256)              -->
+    <!-- ================================================================= -->
+    <div id="admin-login-modal" class="modal-overlay hidden">
+      <div class="modal-box modal-sm">
+        <button class="modal-close" onclick="closeAdminLoginModal()">
+          &times;
+        </button>
+        <div class="modal-header">
+          <span class="modal-tag">XÁC THỰC SHA-256</span>
+          <h3>Đăng Nhập Quản Trị</h3>
+          <p class="card-sub">
+            Mật khẩu được kiểm tra bằng thuật toán băm SHA-256 chống dịch ngược
+            trên trình duyệt.
+          </p>
+        </div>
+        <form onsubmit="handleAdminLogin(event)">
+          <div class="form-field">
+            <label>Mật khẩu quản trị</label>
+            <input
+              type="password"
+              id="adm-password-input"
+              required
+              placeholder="Nhập mật khẩu..."
+            />
+          </div>
+          <button type="submit" class="btn-primary-amber full-width">
+            Đăng Nhập Hệ Thống
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- MODAL 4: CẤU HÌNH SUPABASE (CHỈ MỞ TỪ TRANG ADMIN)                -->
+    <!-- ================================================================= -->
+    <div id="supabase-modal" class="modal-overlay hidden">
+      <div class="modal-box">
+        <button class="modal-close" onclick="closeSupabaseModal()">
+          &times;
+        </button>
+        <div class="modal-header">
+          <span class="modal-tag">KẾT NỐI CƠ SỞ DỮ LIỆU</span>
+          <h3>Cấu Hình Supabase Trực Tuyến</h3>
+          <p class="card-sub">
+            Điền Project URL và Anon Key để lưu trữ dữ liệu thực tế trên Cloud
+            Supabase.
+          </p>
+        </div>
+
+        <form onsubmit="handleSaveSupabaseConfig(event)">
+          <div class="form-field">
+            <label>Supabase Project URL</label>
+            <input
+              type="url"
+              id="sb-url-input"
+              placeholder="https://fficfmuuqvwiqyhnhfrq.supabase.co"
+            />
+          </div>
+          <div class="form-field">
+            <label>Supabase Anon Public Key (eyJ...)</label>
+            <textarea
+              id="sb-key-input"
+              rows="3"
+              placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+            ></textarea>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn-primary-amber">
+              🔌 Lưu &amp; Kết Nối Supabase
+            </button>
+            <button type="button" class="btn-secondary" onclick="useDemoMode()">
+              Chuyển Về Chế Độ Mẫu (Demo)
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
