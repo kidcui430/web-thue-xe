@@ -97,10 +97,10 @@ const DEMO_VEHICLES = [
     weekend_price: 1300000,
     status: "available",
     images: [
-      "https://images.unsplash.com/photo-1560958089-b8a1929cea89?auto=format&fit=crop&w=1000&q=80",
-      "https://images.unsplash.com/photo-1617788138017-80ad40651399?auto=format&fit=crop&w=1000&q=80",
-      "https://images.unsplash.com/photo-1593941707882-a5bba14938c7?auto=format&fit=crop&w=1000&q=80",
-      "https://images.unsplash.com/photo-1536700503339-1e4b06520771?auto=format&fit=crop&w=1000&q=80",
+      "https://i.ibb.co/wNWk4jgT/vf8-chuan.png",
+      "https://i.ibb.co/0jjCpGZ9/mat-truoc.png",
+      "https://i.ibb.co/YzWKqjz/mat-sau.png",
+      "https://i.ibb.co/mrdD7rQs/ca-bin.png",
     ],
     description:
       "SUV điện thông minh, hỗ trợ lái ADAS, màn hình giải trí lớn, đi được hơn 420km/lần sạc đầy.",
