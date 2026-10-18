@@ -52,7 +52,7 @@
 
 html {
   scroll-behavior: smooth;
-  scroll-padding-top: 110px;
+  scroll-padding-top: 140px;
   font-family:
     system-ui,
     -apple-system,
@@ -259,9 +259,15 @@ body {
    ========================================================================== */
 .hero-section {
   position: relative;
-  background-color: var(--slate-950);
+  /* Phủ lớp màu xanh slate mờ đè lên ảnh núi Phú Sĩ Nhật Bản */
+  background-image:
+    linear-gradient(rgba(15, 23, 42, 0.75), rgba(15, 23, 42, 0.9)),
+    url("https://images.unsplash.com/photo-1528164344705-47542687000d?auto=format&fit=crop&w=1920&q=80");
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed; /* Hiệu ứng Parallax: Ảnh đứng im khi cuộn chuột rất xịn */
   color: #fff;
-  padding: 64px 0 80px;
+  padding: 80px 0 88px;
   overflow: hidden;
 }
 
@@ -1448,4 +1454,86 @@ body {
   .main-stage {
     height: 250px;
   }
+}
+
+/* Con mắt Hiện/Ẩn mật khẩu */
+.pass-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.pass-input-wrap input {
+  width: 100%;
+  padding-right: 44px;
+}
+.btn-eye-toggle {
+  position: absolute;
+  right: 8px;
+  background: transparent;
+  border: none;
+  font-size: 1.15rem;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 6px;
+  line-height: 1;
+}
+.btn-eye-toggle:hover {
+  background: var(--slate-100);
+}
+
+/* Công tắc lọc nhanh Chỉ xem xe đang rảnh */
+.avail-toggle-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--emerald-50);
+  border: 1px solid var(--emerald-100);
+  color: var(--emerald-700);
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+/* Thanh Phân Trang (6 chiếc / 1 trang) */
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 36px;
+  flex-wrap: wrap;
+}
+.page-btn {
+  padding: 9px 15px;
+  border-radius: 10px;
+  border: 1px solid var(--slate-200);
+  background: #fff;
+  color: var(--slate-700);
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.page-btn:hover:not(:disabled) {
+  background: var(--amber-50);
+  border-color: var(--amber-400);
+  color: var(--amber-700);
+}
+.page-btn.active {
+  background: var(--amber-500);
+  border-color: var(--amber-500);
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(245, 158, 11, 0.3);
+}
+.page-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.page-info {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--slate-500);
+  margin-left: 8px;
 }

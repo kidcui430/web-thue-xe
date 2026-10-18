@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="vi" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title id="page-title">
+      Giới Thiệu Công Ty | T-Auto Cho Thuê Xe Tự Lái
+    </title>
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23f59e0b'><path d='M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.5 2.8C1.4 11.2 1 12 1 13v3c0 .6.4 1 1 1h2'/><circle cx='7' cy='17' r='2'/><path d='M9 17h6'/><circle cx='17' cy='17' r='2'/></svg>"
+    />
+    <link rel="stylesheet" href="style.css" />
+    <!-- Thư viện Supabase SDK chính thức -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+      /* Ép menu không rớt dòng trên màn hình trung bình */
+      .nav-inner {
+        gap: 8px;
+      }
+      .nav-links {
+        gap: 16px;
+      }
+      .nav-links a {
+        font-size: 0.8rem;
+        white-space: nowrap;
+      }
+      .nav-actions {
+        gap: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- HEADER NAVBAR (Đồng bộ ID để Javascript tự cập nhật Tên và Hotline) -->
+    <header class="navbar">
+      <div class="container nav-inner">
+        <a href="index.html" class="brand" style="text-decoration: none">
+          <div class="brand-logo">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.5 2.8C1.4 11.2 1 12 1 13v3c0 .6.4 1 1 1h2"
+              />
+              <circle cx="7" cy="17" r="2" />
+              <path d="M9 17h6" />
+              <circle cx="17" cy="17" r="2" />
+            </svg>
+          </div>
+          <div class="brand-text">
+            <h1 id="nav-store-name">Cửa Hàng Cho Thuê Xe T-Auto</h1>
+            <span class="brand-sub">✨ CHO THUÊ XE TỰ LÁI UY TÍN</span>
+          </div>
+        </a>
+
+        <nav class="nav-links">
+          <a href="index.html#vehicle-catalog-section">Danh Sách Xe</a>
+          <a href="index.html#hero-section-top">Kiểm Tra Lịch Rảnh</a>
+          <a href="index.html#policy-section">Thủ Tục Thuê Xe</a>
+          <a href="about.html" style="color: var(--amber-600); font-weight: 800"
+            >Giới Thiệu</a
+          >
+        </nav>
+
+        <div class="nav-actions">
+          <a href="tel:0987654321" id="nav-hotline-link" class="btn-hotline">
+            <span class="dot-live"></span>
+            <span
+              >Hotline:
+              <strong id="nav-hotline-text">0987.654.321</strong></span
+            >
+          </a>
+          <a
+            href="index.html"
+            class="btn-secondary"
+            style="
+              text-decoration: none;
+              padding: 9px 14px;
+              white-space: nowrap;
+            "
+            >&larr; Đặt Xe</a
+          >
+        </div>
+      </div>
+    </header>
+
+    <!-- HERO GIỚI THIỆU -->
+    <section class="hero-section" style="padding: 64px 0">
+      <div class="hero-glow-left"></div>
+      <div class="container hero-container">
+        <div class="hero-badge">🏢 VỀ CHÚNG TÔI — T-AUTO VIỆT NAM</div>
+        <h2 class="hero-title">
+          Đồng Hành Cùng Bạn Trên<br />Mọi Hành Trình An Toàn
+        </h2>
+        <p class="hero-subtitle" style="margin-bottom: 0">
+          Hơn 5 năm kinh nghiệm cung cấp dịch vụ cho thuê xe ô tô tự lái, xe
+          điện đời mới và xe máy chất lượng cao.
+        </p>
+      </div>
+    </section>
+
+    <!-- NỘI DUNG GIỚI THIỆU & TẦM NHÌN -->
+    <main class="container" style="padding: 56px 20px; flex: 1">
+      <div class="policy-grid" style="margin-bottom: 48px">
+        <div
+          class="policy-card"
+          style="text-align: center; align-items: center"
+        >
+          <div class="price-main" style="font-size: 2.2rem">50+</div>
+          <h4>Đầu Xe Đời Mới</h4>
+          <p class="policy-text">
+            Đa dạng từ Sedan 4-5 chỗ, MPV/SUV 7 chỗ, Ô tô điện VinFast đến Xe
+            tay ga.
+          </p>
+        </div>
+        <div
+          class="policy-card"
+          style="text-align: center; align-items: center"
+        >
+          <div
+            class="price-main"
+            style="font-size: 2.2rem; color: var(--emerald-600)"
+          >
+            5 Phút
+          </div>
+          <h4>Thủ Tục Nhanh Gọn</h4>
+          <p class="policy-text">
+            Xác minh giấy tờ nhanh chóng, ký hợp đồng minh bạch, nhận xe ngay
+            lập tức.
+          </p>
+        </div>
+        <div
+          class="policy-card"
+          style="text-align: center; align-items: center"
+        >
+          <div
+            class="price-main"
+            style="font-size: 2.2rem; color: var(--blue-600)"
+          >
+            100%
+          </div>
+          <h4>Bảo Dưỡng &amp; Khử Khuẩn</h4>
+          <p class="policy-text">
+            Mỗi chiếc xe trước khi giao đến tay khách hàng đều được kiểm tra an
+            toàn kỹ thuật.
+          </p>
+        </div>
+        <div
+          class="policy-card policy-card-highlight"
+          style="text-align: center; align-items: center"
+        >
+          <div class="price-main" style="font-size: 2.2rem">24/7</div>
+          <h4>Hỗ Trợ Tận Tâm</h4>
+          <p class="policy-text">
+            Đội ngũ kỹ thuật và CSKH luôn túc trực hỗ trợ quý khách suốt hành
+            trình.
+          </p>
+        </div>
+      </div>
+
+      <!-- Câu chuyện thương hiệu & Cam kết -->
+      <div class="admin-card" style="padding: 36px; margin-bottom: 32px">
+        <span class="section-tag">CÂU CHUYỆN THƯƠNG HIỆU</span>
+        <h3 class="section-title" style="margin-bottom: 16px">
+          Vì Sao Khách Hàng Luôn Tin Chọn Chúng Tôi?
+        </h3>
+        <p
+          style="
+            color: var(--slate-600);
+            margin-bottom: 14px;
+            font-size: 0.95rem;
+          "
+        >
+          Xuất phát từ nhu cầu di chuyển tự do, chủ động và riêng tư, cửa hàng
+          ra đời với sứ mệnh xóa bỏ mọi rào cản phức tạp khi thuê xe tự lái
+          truyền thống.
+        </p>
+        <p
+          style="
+            color: var(--slate-600);
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+          "
+        >
+          Quý khách có thể trực tiếp kiểm tra lịch rảnh của từng chiếc xe theo
+          thời gian thực ngay trên website, xem rõ hình ảnh thực tế 4 góc xe
+          (Full body, Mặt trước, Mặt sau, Khoang lái) và đặt giữ xe trực tuyến
+          chỉ với vài thao tác đơn giản.
+        </p>
+
+        <div class="adm-form-grid">
+          <div class="record-card">
+            <strong>✅ Cam Kết Chất Lượng Xe</strong>
+            <p style="color: var(--slate-600)">
+              Toàn bộ xe đều là đời mới, trang bị sẵn Camera hành trình, cảnh
+              báo tốc độ Vietmap, bảo hiểm 2 chiều đầy đủ.
+            </p>
+          </div>
+          <div class="record-card">
+            <strong>✅ Giá Cả Niêm Yết Rõ Ràng</strong>
+            <p style="color: var(--slate-600)">
+              Không phí ẩn, báo giá minh bạch ngay từ đầu. Hoàn trả tiền cọc
+              100% ngay thời điểm bàn giao lại xe.
+            </p>
+          </div>
+          <div class="record-card">
+            <strong>✅ Giao Nhận Xe Tận Nhà</strong>
+            <p style="color: var(--slate-600)">
+              Hỗ trợ giao xe và nhận lại xe tận nơi tại nhà riêng, công ty hoặc
+              sân bay theo đúng khung giờ khách hàng yêu cầu.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div
+        class="admin-card"
+        style="
+          text-align: center;
+          padding: 40px;
+          background: linear-gradient(135deg, #0f172a, #1e293b);
+          color: #fff;
+        "
+      >
+        <h3 style="font-size: 1.5rem; font-weight: 900; margin-bottom: 10px">
+          Bạn Đã Sẵn Sàng Cho Chuyến Đi Tiếp Theo?
+        </h3>
+        <p
+          style="
+            color: var(--slate-400);
+            font-size: 0.9rem;
+            max-width: 540px;
+            margin: 0 auto 20px;
+          "
+        >
+          Kiểm tra ngay những dòng xe đang trống lịch hôm nay và đặt giữ xe chỉ
+          trong 30 giây.
+        </p>
+        <a
+          href="index.html#hero-section-top"
+          class="btn-primary-amber"
+          style="text-decoration: none; display: inline-block"
+        >
+          🚗 Kiểm Tra Lịch Rảnh &amp; Đặt Xe Ngay &rarr;
+        </a>
+      </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+      <div class="container footer-grid">
+        <div>
+          <div class="brand-footer">
+            <div class="brand-logo">🚗</div>
+            <h3 id="footer-store-name">Cửa Hàng Cho Thuê Xe T-Auto</h3>
+          </div>
+          <p class="footer-desc">
+            Dịch vụ cho thuê xe ô tô tự lái, ô tô điện và xe máy uy tín. Kiểm
+            tra lịch rảnh trực tuyến 24/7, thủ tục minh bạch, giao nhận xe tận
+            nơi.
+          </p>
+        </div>
+        <div>
+          <h4>Liên Hệ Cửa Hàng</h4>
+          <ul class="footer-list">
+            <li>
+              📍 Địa chỉ:
+              <span id="footer-address">Bình Dương &amp; TP. Hồ Chí Minh</span>
+            </li>
+            <li>
+              📞 Hotline/Zalo: <strong id="footer-hotline">0987.654.321</strong>
+            </li>
+            <li>🕒 Giờ làm việc: Giao nhận xe 24/7 (Kể cả Lễ &amp; CN)</li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        &copy; 2026 Hệ thống cho thuê xe trực tuyến. All rights reserved.
+      </div>
+    </footer>
+
+    <!-- Gắn App.js để đồng bộ tự động Tên cửa hàng và Hotline từ Supabase -->
+    <script src="app.js"></script>
+  </body>
+</html>

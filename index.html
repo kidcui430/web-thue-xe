@@ -46,12 +46,13 @@
           <a href="#vehicle-catalog-section" onclick="switchView('customer')"
             >Danh Sách Xe</a
           >
-          <a href="#hero-search-box" onclick="switchView('customer')"
+          <a href="#hero-section-top" onclick="switchView('customer')"
             >Kiểm Tra Lịch Rảnh</a
           >
           <a href="#policy-section" onclick="switchView('customer')"
             >Thủ Tục Thuê Xe</a
           >
+          <a href="about.html">Giới Thiệu Công Ty</a>
         </nav>
 
         <div class="nav-actions">
@@ -268,6 +269,16 @@
           </div>
 
           <div class="sub-filters">
+            <!-- Nút công tắc Lọc xe rảnh đã được thêm vào đây -->
+            <label class="avail-toggle-label">
+              <input
+                type="checkbox"
+                id="chk-only-available"
+                onchange="toggleOnlyAvailableFilter(this.checked)"
+              />
+              <span>🟢 Chỉ xem xe đang rảnh</span>
+            </label>
+
             <div class="sub-filter-item">
               <span>Chỗ ngồi:</span>
               <select id="filter-seats" onchange="renderVehiclesGrid()">
@@ -294,6 +305,8 @@
 
       <!-- 5. THỦ TỤC & QUY ĐỊNH THUÊ XE -->
       <section id="policy-section" class="policy-section">
+        <div class="hero-glow-left"></div>
+        <div class="hero-glow-right"></div>
         <div class="container">
           <div class="policy-header">
             <span class="section-tag">MINH BẠCH &amp; AN TÂM TUYỆT ĐỐI</span>
@@ -687,22 +700,30 @@
           <h3 class="card-heading">
             🔐 Đổi Mật Khẩu Quản Trị (Mã Hóa SHA-256 Chống Soi F12)
           </h3>
-          <p class="card-sub">
-            Mật khẩu của bạn sẽ được băm thành chuỗi Hash SHA-256 không thể dịch
-            ngược. Người lạ mở F12 cũng không thể biết mật khẩu thực.
-          </p>
+          <p class="card-sub">Mật khẩu của bạn sẽ được băm thành chuỗi Hash.</p>
           <form
             onsubmit="handleChangeAdminPassword(event)"
             class="adm-form-grid"
           >
             <div class="form-field">
               <label>Nhập mật khẩu mới muốn đổi (*)</label>
-              <input
-                type="password"
-                id="new-admin-pass"
-                required
-                placeholder="Nhập mật khẩu mới..."
-              />
+              <!-- Đã bọc div và thêm nút con mắt ở đây -->
+              <div class="pass-input-wrap">
+                <input
+                  type="password"
+                  id="new-admin-pass"
+                  required
+                  placeholder="Nhập mật khẩu mới..."
+                />
+                <button
+                  type="button"
+                  class="btn-eye-toggle"
+                  onclick="togglePasswordVisibility('new-admin-pass', this)"
+                  title="Hiện mật khẩu"
+                >
+                  👁️
+                </button>
+              </div>
             </div>
             <div class="form-field">
               <label>Mã Hash SHA-256 tương ứng (Tự động sinh ra)</label>

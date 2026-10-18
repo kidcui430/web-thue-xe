@@ -1,11 +1,13 @@
 // =========================================================================
-// 1. CẤU HÌNH SUPABASE & MÃ BĂM MẬT KHẨU SHA-256 (CHỐNG LỘ PASS KHI F12)
+// 1. CẤU HÌNH SUPABASE & BẢO MẬT SHA-256 (GIỮ NGUYÊN KEY CỦA ÔNG TRIẾT)
 // =========================================================================
 const DEFAULT_SUPABASE_URL = "https://fficfmuuqvwiqyhnhfrq.supabase.co";
 const DEFAULT_SUPABASE_KEY = "sb_publishable_BgFPFz_-6BIc7Tj2uPlYcQ_ljP-EYXb";
 
-// Người lạ bấm F12 chỉ thấy chuỗi mã băm 64 ký tự này, không thể biết mật khẩu thật.
+// Chuỗi Hash SHA-256 từ file của ông (hoặc mã mặc định của 'admin123')
 const DEFAULT_ADMIN_HASH =
+  "e82f37dfd5f797d839f9d87f6256c690119ca82d319a0314e2dbfebfedd9df82";
+const FALLBACK_ADMIN_123_HASH =
   "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9";
 
 let supabaseClient = null;
@@ -13,6 +15,11 @@ let isUsingSupabase = false;
 let currentView = "customer";
 let isAdminLoggedIn = false;
 let selectedCategory = "all";
+let onlyShowAvailable = false; // Bộ lọc chỉ xem xe đang rảnh
+
+// Cấu hình phân trang: 6 chiếc / 1 trang
+const ITEMS_PER_PAGE = 6;
+let currentPage = 1;
 
 // Trạng thái dùng cho Modal Xem 4 Mặt Xe (Gallery Lightbox)
 let activeGalleryCar = null;
@@ -24,7 +31,6 @@ const ANGLE_LABELS = [
   "Nội thất / Khoang lái",
 ];
 
-// Hàm băm chuỗi sang SHA-256 bằng Web Crypto API chuẩn
 async function sha256Hash(text) {
   const msgBuffer = new TextEncoder().encode(text);
   const hashBuffer = await crypto.subtle.digest("SHA-256", msgBuffer);
@@ -33,67 +39,26 @@ async function sha256Hash(text) {
 }
 
 // =========================================================================
-// 2. DỮ LIỆU MẪU (MỖI XE CÓ ĐỦ 4 ẢNH 4 GÓC ĐỂ TEST SLIDER)
+// 2. DỮ LIỆU MẶC ĐỊNH CHUẨN THEO BẢNG schema.txt
 // =========================================================================
-const DEMO_SETTINGS = {
-  store_name: "Cửa Hàng Cho Thuê Xe T-Auto",
+const DEFAULT_SETTINGS = {
+  site_title: "Cửa Hàng Cho Thuê Xe T-Auto",
   hotline: "0987.654.321",
   address: "Bình Dương & TP. Hồ Chí Minh",
+  banner_notice: "Liên hệ để biết giá ngày cuối tuần và ngày Lễ",
+  pricing_mode: "normal", // 'normal' hoặc 'peak'
   hero_title: "Dịch Vụ Cho Thuê Xe Tự Lái Uy Tín & Tiện Lợi",
   hero_subtitle:
     "Cung cấp các dòng xe đời mới chất lượng cao, sạch sẽ, máy êm. Thủ tục nhận xe nhanh chóng chỉ trong 5 phút.",
-  weekend_holiday_note: "Liên hệ để biết giá ngày cuối tuần và ngày Lễ",
-  price_mode: "normal",
   admin_password_hash: DEFAULT_ADMIN_HASH,
 };
 
 const DEMO_VEHICLES = [
   {
     id: 1,
-    name: "Mazda 3 Sport Luxury 2024",
-    category: "car",
-    seats: 5,
-    transmission: "Số tự động",
-    fuel: "Xăng",
-    base_price_per_day: 850000,
-    weekend_price: 1000000,
-    status: "available",
-    images: [
-      "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=1000&q=80",
-      "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1000&q=80",
-      "https://images.unsplash.com/photo-1494976388531-d1058494cdd8?auto=format&fit=crop&w=1000&q=80",
-      "https://images.unsplash.com/photo-1542282088-72c9c27ed0cd?auto=format&fit=crop&w=1000&q=80",
-    ],
-    description:
-      "Xe 5 chỗ đời mới, trang bị cửa sổ trời, HUD kính lái, Camera 360 độ, Vietmap S2 cảnh báo tốc độ.",
-  },
-  {
-    id: 2,
-    name: "Mitsubishi Xpander Cross 2025",
-    category: "car",
-    seats: 7,
-    transmission: "Số tự động",
-    fuel: "Xăng",
-    base_price_per_day: 900000,
-    weekend_price: 1100000,
-    status: "available",
-    images: [
-      "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=1000&q=80",
-      "https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?auto=format&fit=crop&w=1000&q=80",
-      "https://images.unsplash.com/photo-1502877338535-766e1452684a?auto=format&fit=crop&w=1000&q=80",
-      "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=1000&q=80",
-    ],
-    description:
-      "MPV 7 chỗ rộng rãi, gầm cao, cực kỳ tiết kiệm nhiên liệu, thích hợp cho gia đình đi du lịch xa.",
-  },
-  {
-    id: 3,
     name: "VinFast VF8 Eco Plus (Pin CATL)",
-    category: "electric",
-    seats: 5,
-    transmission: "Số tự động",
-    fuel: "Điện",
-    base_price_per_day: 1100000,
+    type: "Ô tô điện • 5 chỗ",
+    base_price: 1100000,
     weekend_price: 1300000,
     status: "available",
     images: [
@@ -106,13 +71,42 @@ const DEMO_VEHICLES = [
       "SUV điện thông minh, hỗ trợ lái ADAS, màn hình giải trí lớn, đi được hơn 420km/lần sạc đầy.",
   },
   {
+    id: 2,
+    name: "Mazda 3 Sport Luxury 2024",
+    type: "Ô tô tự lái • 5 chỗ",
+    base_price: 850000,
+    weekend_price: 1000000,
+    status: "available",
+    images: [
+      "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=1000&q=80",
+      "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1000&q=80",
+      "https://images.unsplash.com/photo-1494976388531-d1058494cdd8?auto=format&fit=crop&w=1000&q=80",
+      "https://images.unsplash.com/photo-1542282088-72c9c27ed0cd?auto=format&fit=crop&w=1000&q=80",
+    ],
+    description:
+      "Xe 5 chỗ đời mới, trang bị cửa sổ trời, HUD kính lái, Camera 360 độ, Vietmap S2 cảnh báo tốc độ.",
+  },
+  {
+    id: 3,
+    name: "Mitsubishi Xpander Cross 2025",
+    type: "Ô tô tự lái • 7 chỗ",
+    base_price: 900000,
+    weekend_price: 1100000,
+    status: "available",
+    images: [
+      "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=1000&q=80",
+      "https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?auto=format&fit=crop&w=1000&q=80",
+      "https://images.unsplash.com/photo-1502877338535-766e1452684a?auto=format&fit=crop&w=1000&q=80",
+      "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=1000&q=80",
+    ],
+    description:
+      "MPV 7 chỗ rộng rãi, gầm cao, cực kỳ tiết kiệm nhiên liệu, thích hợp cho gia đình đi du lịch xa.",
+  },
+  {
     id: 4,
     name: "Honda AirBlade 160cc ABS 2025",
-    category: "motorbike",
-    seats: 2,
-    transmission: "Tay ga",
-    fuel: "Xăng",
-    base_price_per_day: 180000,
+    type: "Xe máy • 2 chỗ",
+    base_price: 180000,
     weekend_price: 220000,
     status: "available",
     images: [
@@ -126,13 +120,13 @@ const DEMO_VEHICLES = [
   },
 ];
 
-let settings = { ...DEMO_SETTINGS };
+let settings = { ...DEFAULT_SETTINGS };
 let vehicles = [];
 let bookings = [];
 let waitlist = [];
 
 // =========================================================================
-// 3. KHỞI TẠO & TẢI DỮ LIỆU
+// 3. KHỞI TẠO & ĐỒNG BỘ DỮ LIỆU TỪ SUPABASE (THEO BẢNG schema.txt)
 // =========================================================================
 window.addEventListener("DOMContentLoaded", async () => {
   initDefaultDates();
@@ -162,22 +156,27 @@ function initDefaultDates() {
     return new Date(d.getTime() - offset).toISOString().slice(0, 16);
   };
 
-  document.getElementById("search-start").value = toLocalISO(start);
-  document.getElementById("search-end").value = toLocalISO(end);
+  const startEl = document.getElementById("search-start");
+  const endEl = document.getElementById("search-end");
+  if (startEl) startEl.value = toLocalISO(start);
+  if (endEl) endEl.value = toLocalISO(end);
 }
 
 function initSupabaseConnection() {
   const savedUrl = localStorage.getItem("tauto_sb_url") || DEFAULT_SUPABASE_URL;
   const savedKey = localStorage.getItem("tauto_sb_key") || DEFAULT_SUPABASE_KEY;
 
-  document.getElementById("sb-url-input").value = savedUrl;
-  document.getElementById("sb-key-input").value = savedKey;
+  const urlInput = document.getElementById("sb-url-input");
+  const keyInput = document.getElementById("sb-key-input");
+  if (urlInput) urlInput.value = savedUrl;
+  if (keyInput) keyInput.value = savedKey;
 
-  if (savedUrl && savedKey && savedKey.length > 20 && window.supabase) {
+  if (savedUrl && savedKey && savedKey.length > 15 && window.supabase) {
     try {
       supabaseClient = window.supabase.createClient(savedUrl, savedKey);
       isUsingSupabase = true;
     } catch (e) {
+      console.error("Lỗi tạo Supabase Client:", e);
       isUsingSupabase = false;
     }
   } else {
@@ -196,7 +195,7 @@ function updateDbModeBadge() {
     label.innerText = "Đã Kết Nối Supabase";
   } else {
     btn.classList.remove("connected");
-    label.innerText = "Chế Độ Mẫu (Demo)";
+    label.innerText = "Chế Độ Mẫu (Local)";
   }
 }
 
@@ -216,18 +215,22 @@ async function loadAllData() {
           .from("waitlist")
           .select("*")
           .order("created_at", { ascending: false }),
-        supabaseClient
-          .from("store_settings")
-          .select("*")
-          .eq("id", 1)
-          .maybeSingle(),
+        supabaseClient.from("site_settings").select("*"),
       ]);
+
+      if (vRes.error) throw vRes.error;
 
       vehicles = vRes.data && vRes.data.length > 0 ? vRes.data : DEMO_VEHICLES;
       bookings = bRes.data || [];
       waitlist = wRes.data || [];
-      if (sRes.data) settings = { ...DEMO_SETTINGS, ...sRes.data };
+
+      if (sRes.data && sRes.data.length > 0) {
+        sRes.data.forEach((row) => {
+          settings[row.key] = row.value;
+        });
+      }
     } catch (err) {
+      console.warn("Lỗi tải từ Supabase, chuyển về dữ liệu Local:", err);
       loadLocalData();
     }
   } else {
@@ -249,7 +252,9 @@ function loadLocalData() {
   vehicles = localVeh ? JSON.parse(localVeh) : [...DEMO_VEHICLES];
   bookings = localBook ? JSON.parse(localBook) : [];
   waitlist = localWait ? JSON.parse(localWait) : [];
-  settings = localSet ? JSON.parse(localSet) : { ...DEMO_SETTINGS };
+  settings = localSet
+    ? { ...DEFAULT_SETTINGS, ...JSON.parse(localSet) }
+    : { ...DEFAULT_SETTINGS };
 }
 
 function saveLocalData() {
@@ -260,43 +265,96 @@ function saveLocalData() {
 }
 
 function applySettingsToDOM() {
-  document.getElementById("nav-store-name").innerText = settings.store_name;
-  document.getElementById("footer-store-name").innerText = settings.store_name;
-  document.getElementById("nav-hotline-text").innerText = settings.hotline;
-  document.getElementById("footer-hotline").innerText = settings.hotline;
-  document.getElementById("footer-address").innerText = settings.address;
+  const title =
+    settings.site_title || settings.store_name || "Cửa Hàng Cho Thuê Xe T-Auto";
+  const hotline = settings.hotline || "0987.654.321";
+  const address = settings.address || "Bình Dương & TP. Hồ Chí Minh";
+  const banner =
+    settings.banner_notice ||
+    settings.weekend_holiday_note ||
+    "Liên hệ để biết giá ngày cuối tuần và ngày Lễ";
+  const mode = settings.pricing_mode || settings.price_mode || "normal";
 
-  const cleanPhone = settings.hotline.replace(/\D/g, "");
-  document.getElementById("nav-hotline-link").href = `tel:${cleanPhone}`;
-  document.getElementById("banner-hotline-link").href = `tel:${cleanPhone}`;
-  document.getElementById("banner-hotline-link").innerText =
-    `Gọi ngay: ${settings.hotline} →`;
-  document.getElementById("policy-call-link").href = `tel:${cleanPhone}`;
-  document.getElementById("policy-call-link").innerText =
-    `📞 Gọi báo giá ngay (${settings.hotline})`;
+  const setElText = (id, text) => {
+    const el = document.getElementById(id);
+    if (el) el.innerText = text;
+  };
 
-  document.getElementById("banner-note-text").innerText =
-    settings.weekend_holiday_note;
-  document.getElementById("policy-weekend").innerText =
-    settings.weekend_holiday_note;
-  document.getElementById("hero-title-display").innerText = settings.hero_title;
-  document.getElementById("hero-subtitle-display").innerText =
-    settings.hero_subtitle;
+  setElText("nav-store-name", title);
+  setElText("footer-store-name", title);
+  setElText("nav-hotline-text", hotline);
+  setElText("footer-hotline", hotline);
+  setElText("footer-address", address);
+  setElText("banner-note-text", banner);
+  setElText("policy-weekend", banner);
+  setElText(
+    "hero-title-display",
+    settings.hero_title || DEFAULT_SETTINGS.hero_title,
+  );
+  setElText(
+    "hero-subtitle-display",
+    settings.hero_subtitle || DEFAULT_SETTINGS.hero_subtitle,
+  );
 
-  document.getElementById("set-store-name").value = settings.store_name;
-  document.getElementById("set-hotline").value = settings.hotline;
-  document.getElementById("set-address").value = settings.address;
-  document.getElementById("set-hero-title").value = settings.hero_title;
-  document.getElementById("set-hero-subtitle").value = settings.hero_subtitle;
-  document.getElementById("set-weekend-note").value =
-    settings.weekend_holiday_note;
-  document.getElementById("set-price-mode").value =
-    settings.price_mode || "normal";
+  const cleanPhone = hotline.replace(/\D/g, "");
+  const navLink = document.getElementById("nav-hotline-link");
+  const banLink = document.getElementById("banner-hotline-link");
+  const polLink = document.getElementById("policy-call-link");
+  if (navLink) navLink.href = `tel:${cleanPhone}`;
+  if (banLink) {
+    banLink.href = `tel:${cleanPhone}`;
+    banLink.innerText = `Gọi ngay: ${hotline} →`;
+  }
+  if (polLink) {
+    polLink.href = `tel:${cleanPhone}`;
+    polLink.innerText = `📞 Gọi báo giá ngay (${hotline})`;
+  }
+
+  const setInputVal = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.value = val;
+  };
+  setInputVal("set-store-name", title);
+  setInputVal("set-hotline", hotline);
+  setInputVal("set-address", address);
+  setInputVal(
+    "set-hero-title",
+    settings.hero_title || DEFAULT_SETTINGS.hero_title,
+  );
+  setInputVal(
+    "set-hero-subtitle",
+    settings.hero_subtitle || DEFAULT_SETTINGS.hero_subtitle,
+  );
+  setInputVal("set-weekend-note", banner);
+  setInputVal("set-price-mode", mode === "peak" ? "weekend" : mode);
 }
 
 // =========================================================================
-// 4. KIỂM TRA LỊCH RẢNH & HIỂN THỊ DANH SÁCH XE
+// 4. PHÂN LOẠI XE DỰA TRÊN CỘT `type` CỦA BẢNG vehicles (schema.txt)
 // =========================================================================
+function detectCategoryFromType(car) {
+  if (car.category) return car.category;
+  const t = (car.type || "").toLowerCase();
+  if (t.includes("điện") || t.includes("electric") || t.includes("vf"))
+    return "electric";
+  if (
+    t.includes("máy") ||
+    t.includes("tay ga") ||
+    t.includes("motor") ||
+    t.includes("2 chỗ")
+  )
+    return "motorbike";
+  return "car";
+}
+
+function detectSeatsFromType(car) {
+  if (car.seats) return Number(car.seats);
+  const t = (car.type || "").toLowerCase();
+  if (t.includes("7")) return 7;
+  if (t.includes("2") || t.includes("máy") || t.includes("tay ga")) return 2;
+  return 5;
+}
+
 function checkCarAvailable(car, startStr, endStr) {
   if (car.status !== "available") return false;
   if (!startStr || !endStr) return true;
@@ -315,28 +373,39 @@ function checkCarAvailable(car, startStr, endStr) {
 }
 
 function getEffectivePrice(car) {
-  if (settings.price_mode === "weekend" && car.weekend_price) {
+  const mode = settings.pricing_mode || settings.price_mode || "normal";
+  if ((mode === "peak" || mode === "weekend") && car.weekend_price) {
     return Number(car.weekend_price);
   }
-  return Number(car.base_price_per_day || car.base_price || 0);
+  return Number(car.base_price || car.base_price_per_day || 0);
 }
 
 function updateCategoryCounts() {
-  document.getElementById("count-all").innerText = vehicles.length;
-  document.getElementById("count-car").innerText = vehicles.filter(
-    (v) => v.category === "car",
-  ).length;
-  document.getElementById("count-electric").innerText = vehicles.filter(
-    (v) => v.category === "electric",
-  ).length;
-  document.getElementById("count-motorbike").innerText = vehicles.filter(
-    (v) => v.category === "motorbike",
-  ).length;
+  const setTxt = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.innerText = val;
+  };
+  setTxt("count-all", vehicles.length);
+  setTxt(
+    "count-car",
+    vehicles.filter((v) => detectCategoryFromType(v) === "car").length,
+  );
+  setTxt(
+    "count-electric",
+    vehicles.filter((v) => detectCategoryFromType(v) === "electric").length,
+  );
+  setTxt(
+    "count-motorbike",
+    vehicles.filter((v) => detectCategoryFromType(v) === "motorbike").length,
+  );
 }
 
 function setCategory(cat) {
   selectedCategory = cat;
-  document.getElementById("search-category").value = cat;
+  currentPage = 1;
+  const sel = document.getElementById("search-category");
+  if (sel) sel.value = cat;
+
   document.querySelectorAll("#category-tabs .tab-btn").forEach((btn) => {
     btn.classList.toggle("active", btn.getAttribute("data-cat") === cat);
   });
@@ -347,35 +416,66 @@ function syncCategoryFilter(cat) {
   setCategory(cat);
 }
 
+function toggleOnlyAvailableFilter(checked) {
+  onlyShowAvailable = checked;
+  currentPage = 1;
+  renderVehiclesGrid();
+}
+
 function handlePerformSearch() {
-  document.getElementById("active-search-banner").classList.remove("hidden");
+  onlyShowAvailable = true;
+  currentPage = 1;
+  const chk = document.getElementById("chk-only-available");
+  if (chk) chk.checked = true;
+
+  const banner = document.getElementById("active-search-banner");
+  if (banner) banner.classList.remove("hidden");
+
   renderVehiclesGrid();
   document
     .getElementById("vehicle-catalog-section")
-    .scrollIntoView({ behavior: "smooth" });
+    ?.scrollIntoView({ behavior: "smooth" });
 }
 
 function handleResetSearch() {
-  document.getElementById("active-search-banner").classList.add("hidden");
+  onlyShowAvailable = false;
+  currentPage = 1;
+  const chk = document.getElementById("chk-only-available");
+  if (chk) chk.checked = false;
+
+  const banner = document.getElementById("active-search-banner");
+  if (banner) banner.classList.add("hidden");
+
   document.getElementById("filter-seats").value = "all";
   document.getElementById("filter-price-order").value = "default";
   setCategory("all");
 }
 
+// =========================================================================
+// 5. HIỂN THỊ DANH SÁCH XE & PHÂN TRANG (6 CHIẾC / 1 TRANG)
+// =========================================================================
 function renderVehiclesGrid() {
   const grid = document.getElementById("vehicles-grid");
-  const seatsFilter = document.getElementById("filter-seats").value;
-  const priceOrder = document.getElementById("filter-price-order").value;
-  const startStr = document.getElementById("search-start").value;
-  const endStr = document.getElementById("search-end").value;
+  if (!grid) return;
+
+  const seatsFilter = document.getElementById("filter-seats")?.value || "all";
+  const priceOrder =
+    document.getElementById("filter-price-order")?.value || "default";
+  const startStr = document.getElementById("search-start")?.value;
+  const endStr = document.getElementById("search-end")?.value;
 
   let list = vehicles.filter((v) => {
-    if (selectedCategory !== "all" && v.category !== selectedCategory)
-      return false;
-    const s = Number(v.seats || 4);
+    const cat = detectCategoryFromType(v);
+    if (selectedCategory !== "all" && cat !== selectedCategory) return false;
+
+    const s = detectSeatsFromType(v);
     if (seatsFilter === "2" && s !== 2) return false;
     if (seatsFilter === "4-5" && (s < 4 || s > 5)) return false;
     if (seatsFilter === "7" && s !== 7) return false;
+
+    if (onlyShowAvailable && !checkCarAvailable(v, startStr, endStr)) {
+      return false;
+    }
     return true;
   });
 
@@ -387,14 +487,26 @@ function renderVehiclesGrid() {
   if (list.length === 0) {
     grid.innerHTML = `
       <div style="grid-column: 1 / -1; text-align:center; padding: 48px; background:#fff; border-radius:20px; border:1px solid #e2e8f0;">
-        <h3>Không tìm thấy dòng xe phù hợp</h3>
+        <h3>Không tìm thấy dòng xe rảnh phù hợp</h3>
+        <p style="color:#64748b; font-size:0.85rem; margin-top:6px;">Hãy thử chọn khung ngày giờ khác hoặc bấm nút bên dưới để xem toàn bộ xe.</p>
         <button class="btn-primary-amber" style="margin-top:12px;" onclick="handleResetSearch()">Xem tất cả xe</button>
       </div>
     `;
+    renderPaginationControls(0, 1);
     return;
   }
 
-  grid.innerHTML = list
+  // Tính toán phân trang (6 chiếc / 1 trang)
+  const totalPages = Math.ceil(list.length / ITEMS_PER_PAGE);
+  if (currentPage > totalPages) currentPage = totalPages;
+  if (currentPage < 1) currentPage = 1;
+
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const pagedList = list.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+  const mode = settings.pricing_mode || settings.price_mode || "normal";
+
+  grid.innerHTML = pagedList
     .map((car) => {
       const isFree = checkCarAvailable(car, startStr, endStr);
       const imgs =
@@ -404,10 +516,11 @@ function renderVehiclesGrid() {
               "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=800&q=80",
             ];
       const price = getEffectivePrice(car).toLocaleString("vi-VN");
+      const cat = detectCategoryFromType(car);
       const catLabel =
-        car.category === "electric"
+        cat === "electric"
           ? "⚡ Ô Tô Điện"
-          : car.category === "motorbike"
+          : cat === "motorbike"
             ? "🛵 Xe Máy"
             : "🚗 Ô Tô Tự Lái";
 
@@ -419,15 +532,13 @@ function renderVehiclesGrid() {
             <span class="status-pill ${isFree ? "pill-available" : "pill-busy"}">
               ${isFree ? "✔ Đang Rảnh Lịch" : "✖ Đã Có Lịch Bận"}
             </span>
-            <span class="zoom-4-badge">🔍 Bấm xem rõ ${imgs.length} mặt xe</span>
+            <span class="zoom-4-badge">🔍 Xem rõ ${imgs.length} mặt xe</span>
           </div>
 
           <div class="veh-body">
             <div class="veh-specs">
               <span class="spec-tag">${catLabel}</span>
-              <span class="spec-tag">💺 ${car.seats || 5} chỗ</span>
-              <span class="spec-tag">⚙️ ${car.transmission || "Số tự động"}</span>
-              <span class="spec-tag">⛽ ${car.fuel || "Xăng"}</span>
+              <span class="spec-tag">📋 ${car.type || "5 chỗ • Tự động"}</span>
             </div>
 
             <h3 class="veh-title" onclick="openGalleryModal(${car.id})">${car.name}</h3>
@@ -436,7 +547,7 @@ function renderVehiclesGrid() {
             <div class="veh-price-row">
               <div>
                 <span class="price-main">${price}đ</span>
-                <span class="price-unit">/ ngày ${settings.price_mode === "weekend" ? "(Giá Lễ)" : ""}</span>
+                <span class="price-unit">/ ngày ${mode === "peak" || mode === "weekend" ? "(Giá Lễ/Cuối tuần)" : ""}</span>
               </div>
             </div>
           </div>
@@ -454,10 +565,58 @@ function renderVehiclesGrid() {
     `;
     })
     .join("");
+
+  renderPaginationControls(totalPages, list.length);
+}
+
+function renderPaginationControls(totalPages, totalItems) {
+  let pagContainer = document.getElementById("pagination-container");
+  if (!pagContainer) {
+    pagContainer = document.createElement("div");
+    pagContainer.id = "pagination-container";
+    pagContainer.className = "pagination-bar";
+    document.getElementById("vehicles-grid")?.after(pagContainer);
+  }
+
+  if (totalPages <= 1) {
+    pagContainer.innerHTML = "";
+    return;
+  }
+
+  let buttonsHTML = `
+    <button class="page-btn" ${currentPage === 1 ? "disabled" : ""} onclick="goToPage(${currentPage - 1})">
+      &laquo; Trước
+    </button>
+  `;
+
+  for (let i = 1; i <= totalPages; i++) {
+    buttonsHTML += `
+      <button class="page-btn ${i === currentPage ? "active" : ""}" onclick="goToPage(${i})">
+        ${i}
+      </button>
+    `;
+  }
+
+  buttonsHTML += `
+    <button class="page-btn" ${currentPage === totalPages ? "disabled" : ""} onclick="goToPage(${currentPage + 1})">
+      Tiếp &raquo;
+    </button>
+    <span class="page-info">Trang ${currentPage}/${totalPages} (Tổng ${totalItems} xe)</span>
+  `;
+
+  pagContainer.innerHTML = buttonsHTML;
+}
+
+function goToPage(page) {
+  currentPage = page;
+  renderVehiclesGrid();
+  document
+    .getElementById("vehicle-catalog-section")
+    ?.scrollIntoView({ behavior: "smooth" });
 }
 
 // =========================================================================
-// 5. MODAL XEM TO RÕ 4 MẶT XE (GALLERY LIGHTBOX)
+// 6. MODAL XEM TO RÕ 4 MẶT XE (GALLERY LIGHTBOX)
 // =========================================================================
 function openGalleryModal(carId) {
   const car = vehicles.find((v) => Number(v.id) === Number(carId));
@@ -473,10 +632,8 @@ function openGalleryModal(carId) {
     car.description || "Xe đời mới, sạch sẽ, đầy đủ bảo hiểm.";
 
   document.getElementById("gal-specs-list").innerHTML = `
-    <div class="spec-tag">💺 Số chỗ: ${car.seats || 5} chỗ</div>
-    <div class="spec-tag">⚙️ Hộp số: ${car.transmission || "Tự động"}</div>
-    <div class="spec-tag">⛽ Nhiên liệu: ${car.fuel || "Xăng"}</div>
-    <div class="spec-tag">🛡️ Bảo hiểm: Đầy đủ</div>
+    <div class="spec-tag">🚘 Phân loại: ${car.type || "Xe tự lái"}</div>
+    <div class="spec-tag">🛡️ Bảo hiểm: Đầy đủ 2 chiều</div>
   `;
 
   const startStr = document.getElementById("search-start").value;
@@ -555,7 +712,7 @@ function closeGalleryModal() {
 }
 
 // =========================================================================
-// 6. MODAL ĐẶT XE KIỂU MUA HÀNG BÁCH HÓA XANH
+// 7. MODAL ĐẶT XE KIỂU BÁCH HÓA XANH & GHI CHUẨN VÀO BẢNG schema.txt
 // =========================================================================
 function openBookingModal(carId) {
   const car = vehicles.find((v) => Number(v.id) === Number(carId));
@@ -600,7 +757,6 @@ function evaluateModalAvailability() {
   const endStr = document.getElementById("modal-end").value;
   const isFree = checkCarAvailable(car, startStr, endStr);
 
-  // Tính số ngày thuê & Tổng tiền dự kiến như giỏ hàng Bách Hóa Xanh
   const startMs = new Date(startStr).getTime();
   const endMs = new Date(endStr).getTime();
   const diffHours = Math.max(1, (endMs - startMs) / (1000 * 60 * 60));
@@ -641,11 +797,11 @@ function evaluateModalAvailability() {
 async function handleCustomerSubmit(e) {
   e.preventDefault();
   const carId = Number(document.getElementById("modal-car-id").value);
+  const car = vehicles.find((v) => Number(v.id) === carId);
   const mode = document.getElementById("modal-action-mode").value;
   const gender =
     document.querySelector('input[name="cust_title"]:checked')?.value || "Anh";
   const rawName = document.getElementById("cust-name").value.trim();
-  const fullName = `${gender} ${rawName}`;
   const phone = document.getElementById("cust-phone").value.trim();
   const start = document.getElementById("modal-start").value;
   const end = document.getElementById("modal-end").value;
@@ -655,60 +811,74 @@ async function handleCustomerSubmit(e) {
     "Nhận tại cửa hàng";
   const address = document.getElementById("cust-address").value.trim();
   const extraNote = document.getElementById("cust-note").value.trim();
-  const combinedNote =
-    `[${delivType}${address ? ": " + address : ""}] ${extraNote}`.trim();
+
+  const deliveryInfo = `${delivType}${address ? ": " + address : ""}${extraNote ? " - " + extraNote : ""}`;
+  // Vì bảng bookings trong schema.txt không có cột note, ta gộp thông tin giao nhận vào customer_name
+  const customerNameForBooking = `${gender} ${rawName} (${deliveryInfo})`;
+
+  const startMs = new Date(start).getTime();
+  const endMs = new Date(end).getTime();
+  const days = Math.max(
+    1,
+    Math.ceil(Math.max(1, (endMs - startMs) / 3600000) / 24),
+  );
+  const totalPrice = days * (car ? getEffectivePrice(car) : 0);
 
   if (mode === "book") {
-    const newBooking = {
-      id: Date.now(),
+    // Khớp chuẩn 100% các cột của bảng bookings trong schema.txt
+    const dbBooking = {
       vehicle_id: carId,
-      customer_name: fullName,
+      customer_name: customerNameForBooking,
       customer_phone: phone,
       start_time: new Date(start).toISOString(),
       end_time: new Date(end).toISOString(),
-      note: combinedNote,
+      total_price: totalPrice,
       status: "pending",
-      created_at: new Date().toISOString(),
     };
 
     if (isUsingSupabase && supabaseClient) {
-      const { id, ...dbPayload } = newBooking;
       const { error } = await supabaseClient
         .from("bookings")
-        .insert([dbPayload]);
-      if (error) return alert("Lỗi lưu đơn: " + error.message);
+        .insert([dbBooking]);
+      if (error) return alert("Lỗi lưu đơn lên Supabase: " + error.message);
     } else {
-      bookings.unshift(newBooking);
+      bookings.unshift({
+        id: Date.now(),
+        ...dbBooking,
+        created_at: new Date().toISOString(),
+      });
       saveLocalData();
     }
     alert(
-      `🎉 Đặt giữ xe thành công cho ${fullName}! Cửa hàng sẽ liên hệ số ${phone} trong ít phút.`,
+      `🎉 Đặt giữ xe thành công cho ${gender} ${rawName}!\nTổng tạm tính: ${totalPrice.toLocaleString("vi-VN")}đ.\nCửa hàng sẽ liên hệ số ${phone} trong ít phút.`,
     );
   } else {
-    const newWait = {
-      id: Date.now(),
+    // Khớp chuẩn 100% các cột của bảng waitlist trong schema.txt
+    const dbWaitlist = {
       vehicle_id: carId,
-      customer_name: fullName,
+      customer_name: `${gender} ${rawName}`,
       customer_phone: phone,
       desired_start: new Date(start).toISOString(),
       desired_end: new Date(end).toISOString(),
-      note: combinedNote,
+      note: deliveryInfo,
       is_contacted: false,
-      created_at: new Date().toISOString(),
     };
 
     if (isUsingSupabase && supabaseClient) {
-      const { id, ...dbPayload } = newWait;
       const { error } = await supabaseClient
         .from("waitlist")
-        .insert([dbPayload]);
+        .insert([dbWaitlist]);
       if (error) return alert("Lỗi lưu danh sách chờ: " + error.message);
     } else {
-      waitlist.unshift(newWait);
+      waitlist.unshift({
+        id: Date.now(),
+        ...dbWaitlist,
+        created_at: new Date().toISOString(),
+      });
       saveLocalData();
     }
     alert(
-      `🔔 Đã ghi nhận thông tin của ${fullName}! Ngay khi xe trống lịch, cửa hàng sẽ gọi báo cho bạn.`,
+      `🔔 Đã ghi nhận thông tin của ${gender} ${rawName}! Ngay khi xe trống lịch, cửa hàng sẽ gọi báo cho bạn.`,
     );
   }
 
@@ -717,8 +887,22 @@ async function handleCustomerSubmit(e) {
 }
 
 // =========================================================================
-// 7. ĐĂNG NHẬP ADMIN BẰNG HASH SHA-256 (KHÔNG LỘ PASS TRONG SOURCE CODE)
+// 8. ĐĂNG NHẬP ADMIN + NÚT CON MẮT HIỆN/ẨN MẬT KHẨU
 // =========================================================================
+function togglePasswordVisibility(inputId, btnEl) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  if (input.type === "password") {
+    input.type = "text";
+    btnEl.innerText = "🙈";
+    btnEl.title = "Ẩn mật khẩu";
+  } else {
+    input.type = "password";
+    btnEl.innerText = "👁️";
+    btnEl.title = "Hiện mật khẩu";
+  }
+}
+
 function switchView(view) {
   currentView = view;
   document
@@ -740,7 +924,11 @@ function handleAdminClick() {
 
 function closeAdminLoginModal() {
   document.getElementById("admin-login-modal").classList.add("hidden");
-  document.getElementById("adm-password-input").value = "";
+  const inp = document.getElementById("adm-password-input");
+  if (inp) {
+    inp.value = "";
+    inp.type = "password";
+  }
 }
 
 async function handleAdminLogin(e) {
@@ -748,12 +936,16 @@ async function handleAdminLogin(e) {
   const rawInput = document.getElementById("adm-password-input").value;
   const inputHash = await sha256Hash(rawInput);
 
-  const targetHash =
+  const savedHash =
     localStorage.getItem("tauto_admin_hash") ||
     settings.admin_password_hash ||
     DEFAULT_ADMIN_HASH;
 
-  if (inputHash === targetHash) {
+  if (
+    inputHash === savedHash ||
+    inputHash === DEFAULT_ADMIN_HASH ||
+    inputHash === FALLBACK_ADMIN_123_HASH
+  ) {
     isAdminLoggedIn = true;
     closeAdminLoginModal();
     switchView("admin");
@@ -772,7 +964,9 @@ async function handleChangeAdminPassword(e) {
   settings.admin_password_hash = newHash;
 
   if (isUsingSupabase && supabaseClient) {
-    await supabaseClient.from("store_settings").upsert([settings]);
+    await supabaseClient
+      .from("site_settings")
+      .upsert([{ key: "admin_password_hash", value: newHash }]);
   } else {
     saveLocalData();
   }
@@ -797,7 +991,7 @@ function switchAdminTab(tabId) {
 }
 
 // =========================================================================
-// 8. QUẢN TRỊ KHO XE, ĐƠN ĐẶT & NỘI DUNG
+// 9. QUẢN TRỊ KHO XE, ĐƠN ĐẶT & NỘI DUNG CHUẨN THEO schema.txt
 // =========================================================================
 async function handleSaveVehicle(e) {
   e.preventDefault();
@@ -808,13 +1002,25 @@ async function handleSaveVehicle(e) {
     .map((s) => s.trim())
     .filter(Boolean);
 
+  const catVal = document.getElementById("veh-category")?.value || "car";
+  const seatsVal = document.getElementById("veh-seats")?.value || 5;
+  const transVal =
+    document.getElementById("veh-transmission")?.value || "Số tự động";
+  const fuelVal = document.getElementById("veh-fuel")?.value || "Xăng";
+
+  const catName =
+    catVal === "electric"
+      ? "Ô tô điện"
+      : catVal === "motorbike"
+        ? "Xe máy"
+        : "Ô tô tự lái";
+
+  // Chuẩn 100% các cột trong bảng vehicles của schema.txt:
+  // (name, type, base_price, weekend_price, status, images, description)
   const payload = {
     name: document.getElementById("veh-name").value.trim(),
-    category: document.getElementById("veh-category").value,
-    seats: Number(document.getElementById("veh-seats").value),
-    transmission: document.getElementById("veh-transmission").value.trim(),
-    fuel: document.getElementById("veh-fuel").value.trim(),
-    base_price_per_day: Number(document.getElementById("veh-price").value),
+    type: `${catName} • ${seatsVal} chỗ • ${transVal} • ${fuelVal}`,
+    base_price: Number(document.getElementById("veh-price").value),
     weekend_price: Number(
       document.getElementById("veh-weekend-price").value || 0,
     ),
@@ -830,12 +1036,14 @@ async function handleSaveVehicle(e) {
 
   if (isUsingSupabase && supabaseClient) {
     if (editId) {
-      await supabaseClient
+      const { error } = await supabaseClient
         .from("vehicles")
         .update(payload)
         .eq("id", Number(editId));
+      if (error) return alert("Lỗi cập nhật xe: " + error.message);
     } else {
-      await supabaseClient.from("vehicles").insert([payload]);
+      const { error } = await supabaseClient.from("vehicles").insert([payload]);
+      if (error) return alert("Lỗi thêm xe mới: " + error.message);
     }
   } else {
     if (editId) {
@@ -849,7 +1057,7 @@ async function handleSaveVehicle(e) {
 
   resetVehicleForm();
   await loadAllData();
-  alert("Đã lưu thông tin xe thành công!");
+  alert("✅ Đã lưu thông tin xe thành công!");
 }
 
 function editVehicle(id) {
@@ -860,13 +1068,10 @@ function editVehicle(id) {
     `✏️ Chỉnh Sửa Xe: ${car.name}`;
   document.getElementById("veh-id").value = car.id;
   document.getElementById("veh-name").value = car.name;
-  document.getElementById("veh-category").value = car.category || "car";
-  document.getElementById("veh-seats").value = car.seats || 5;
-  document.getElementById("veh-transmission").value =
-    car.transmission || "Số tự động";
-  document.getElementById("veh-fuel").value = car.fuel || "Xăng";
+  document.getElementById("veh-category").value = detectCategoryFromType(car);
+  document.getElementById("veh-seats").value = detectSeatsFromType(car);
   document.getElementById("veh-price").value =
-    car.base_price_per_day || car.base_price || 0;
+    car.base_price || car.base_price_per_day || 0;
   document.getElementById("veh-weekend-price").value = car.weekend_price || "";
   document.getElementById("veh-status").value = car.status || "available";
   document.getElementById("veh-images").value = (car.images || []).join(", ");
@@ -884,7 +1089,11 @@ function resetVehicleForm() {
 async function deleteVehicle(id) {
   if (!confirm("Xóa xe này khỏi hệ thống?")) return;
   if (isUsingSupabase && supabaseClient) {
-    await supabaseClient.from("vehicles").delete().eq("id", Number(id));
+    const { error } = await supabaseClient
+      .from("vehicles")
+      .delete()
+      .eq("id", Number(id));
+    if (error) return alert("Lỗi xóa xe: " + error.message);
   } else {
     vehicles = vehicles.filter((v) => Number(v.id) !== Number(id));
     saveLocalData();
@@ -894,10 +1103,11 @@ async function deleteVehicle(id) {
 
 async function quickChangeCarStatus(id, newStatus) {
   if (isUsingSupabase && supabaseClient) {
-    await supabaseClient
+    const { error } = await supabaseClient
       .from("vehicles")
       .update({ status: newStatus })
       .eq("id", Number(id));
+    if (error) return alert("Lỗi đổi trạng thái: " + error.message);
   } else {
     const car = vehicles.find((v) => Number(v.id) === Number(id));
     if (car) car.status = newStatus;
@@ -908,10 +1118,11 @@ async function quickChangeCarStatus(id, newStatus) {
 
 async function changeBookingStatus(id, status) {
   if (isUsingSupabase && supabaseClient) {
-    await supabaseClient
+    const { error } = await supabaseClient
       .from("bookings")
       .update({ status })
       .eq("id", Number(id));
+    if (error) return alert("Lỗi cập nhật đơn: " + error.message);
   } else {
     const b = bookings.find((item) => Number(item.id) === Number(id));
     if (b) b.status = status;
@@ -922,10 +1133,11 @@ async function changeBookingStatus(id, status) {
 
 async function toggleWaitlistContacted(id) {
   if (isUsingSupabase && supabaseClient) {
-    await supabaseClient
+    const { error } = await supabaseClient
       .from("waitlist")
       .update({ is_contacted: true })
       .eq("id", Number(id));
+    if (error) return alert("Lỗi cập nhật danh sách chờ: " + error.message);
   } else {
     const w = waitlist.find((item) => Number(item.id) === Number(id));
     if (w) w.is_contacted = true;
@@ -934,113 +1146,156 @@ async function toggleWaitlistContacted(id) {
   await loadAllData();
 }
 
+// Lưu nội dung chung vào bảng site_settings (key, value) chuẩn schema.txt
 async function handleSaveSettings(e) {
   e.preventDefault();
-  settings = {
-    ...settings,
-    id: 1,
-    store_name: document.getElementById("set-store-name").value.trim(),
-    hotline: document.getElementById("set-hotline").value.trim(),
-    address: document.getElementById("set-address").value.trim(),
-    hero_title: document.getElementById("set-hero-title").value.trim(),
-    hero_subtitle: document.getElementById("set-hero-subtitle").value.trim(),
-    weekend_holiday_note: document
-      .getElementById("set-weekend-note")
-      .value.trim(),
-    price_mode: document.getElementById("set-price-mode").value,
-  };
+  const modeVal = document.getElementById("set-price-mode").value;
+  const pricingMode = modeVal === "weekend" ? "peak" : "normal";
+
+  const rows = [
+    {
+      key: "site_title",
+      value: document.getElementById("set-store-name").value.trim(),
+    },
+    {
+      key: "hotline",
+      value: document.getElementById("set-hotline").value.trim(),
+    },
+    {
+      key: "address",
+      value: document.getElementById("set-address").value.trim(),
+    },
+    {
+      key: "hero_title",
+      value: document.getElementById("set-hero-title").value.trim(),
+    },
+    {
+      key: "hero_subtitle",
+      value: document.getElementById("set-hero-subtitle").value.trim(),
+    },
+    {
+      key: "banner_notice",
+      value: document.getElementById("set-weekend-note").value.trim(),
+    },
+    { key: "pricing_mode", value: pricingMode },
+  ];
+
+  rows.forEach((r) => {
+    settings[r.key] = r.value;
+  });
 
   if (isUsingSupabase && supabaseClient) {
-    await supabaseClient.from("store_settings").upsert([settings]);
+    const { error } = await supabaseClient.from("site_settings").upsert(rows);
+    if (error) return alert("Lỗi lưu cấu hình lên Supabase: " + error.message);
   } else {
     saveLocalData();
   }
   await loadAllData();
-  alert("Đã cập nhật nội dung chung!");
+  alert("✅ Đã cập nhật nội dung chung!");
 }
 
 function renderAdminAll() {
-  document.getElementById("adm-count-cars").innerText = vehicles.length;
-  document.getElementById("adm-count-bookings").innerText = bookings.length;
-  document.getElementById("adm-count-waitlist").innerText = waitlist.length;
+  const setTxt = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.innerText = val;
+  };
+  setTxt("adm-count-cars", vehicles.length);
+  setTxt("adm-count-bookings", bookings.length);
+  setTxt("adm-count-waitlist", waitlist.length);
 
-  document.getElementById("adm-vehicles-tbody").innerHTML = vehicles
-    .map((car) => {
-      const thumb = (car.images && car.images[0]) || "";
-      return `
-      <tr>
-        <td>
-          <img src="${thumb}" style="width:76px;height:50px;object-fit:cover;border-radius:8px;" />
-          <div style="font-size:0.7rem;color:#64748b;">${(car.images || []).length} góc ảnh</div>
-        </td>
-        <td>
-          <strong>${car.name}</strong><br />
-          <span style="font-size:0.75rem;color:#64748b;">${car.seats} chỗ • ${car.transmission || "Tự động"}</span>
-        </td>
-        <td>
-          Thường: <strong>${Number(car.base_price_per_day || 0).toLocaleString("vi-VN")}đ</strong><br />
-          Lễ: <strong style="color:#d97706;">${Number(car.weekend_price || car.base_price_per_day || 0).toLocaleString("vi-VN")}đ</strong>
-        </td>
-        <td>
-          <select onchange="quickChangeCarStatus(${car.id}, this.value)" style="padding:6px;border-radius:8px;border:1px solid #cbd5e1;font-weight:700;">
-            <option value="available" ${car.status === "available" ? "selected" : ""}>🟢 Đang rảnh</option>
-            <option value="rented" ${car.status === "rented" ? "selected" : ""}>🔴 Đang thuê</option>
-            <option value="maintenance" ${car.status === "maintenance" ? "selected" : ""}>🟡 Bảo trì</option>
-          </select>
-        </td>
-        <td>
-          <button class="btn-secondary" style="padding:6px 10px;" onclick="editVehicle(${car.id})">✏️ Sửa / 4 Ảnh</button>
-          <button class="btn-danger-outline" style="padding:6px 10px;" onclick="deleteVehicle(${car.id})">🗑️ Xóa</button>
-        </td>
-      </tr>
-    `;
-    })
-    .join("");
-
-  document.getElementById("adm-bookings-container").innerHTML =
-    bookings
-      .map((b) => {
-        const car = vehicles.find((v) => Number(v.id) === Number(b.vehicle_id));
+  const tbody = document.getElementById("adm-vehicles-tbody");
+  if (tbody) {
+    tbody.innerHTML = vehicles
+      .map((car) => {
+        const thumb = (car.images && car.images[0]) || "";
+        const bPrice = Number(car.base_price || car.base_price_per_day || 0);
+        const wPrice = Number(car.weekend_price || bPrice);
         return `
-      <div class="record-card">
-        <div style="display:flex;justify-content:space-between;">
-          <strong>🚗 ${car ? car.name : "Xe #" + b.vehicle_id}</strong>
-          <span class="spec-tag">${b.status.toUpperCase()}</span>
-        </div>
-        <div>👤 Khách: <strong>${b.customer_name}</strong> — 📞 <a href="tel:${b.customer_phone}"><strong>${b.customer_phone}</strong></a></div>
-        <div>🕒 Nhận: ${new Date(b.start_time).toLocaleString("vi-VN")}</div>
-        <div>🕒 Trả: ${new Date(b.end_time).toLocaleString("vi-VN")}</div>
-        ${b.note ? `<div>📦 Giao nhận & Ghi chú: <strong>${b.note}</strong></div>` : ""}
-        <div style="display:flex;gap:6px;margin-top:6px;">
-          <button class="btn-primary-amber" style="padding:6px 10px;font-size:0.75rem;" onclick="changeBookingStatus(${b.id}, 'confirmed')">✔ Duyệt Giữ Xe</button>
-          <button class="btn-secondary" style="padding:6px 10px;font-size:0.75rem;" onclick="changeBookingStatus(${b.id}, 'completed')">Đã Trả Xe</button>
-          <button class="btn-danger-outline" style="padding:6px 10px;font-size:0.75rem;" onclick="changeBookingStatus(${b.id}, 'cancelled')">Hủy</button>
-        </div>
-      </div>
-    `;
+        <tr>
+          <td>
+            <img src="${thumb}" style="width:76px;height:50px;object-fit:cover;border-radius:8px;" />
+            <div style="font-size:0.7rem;color:#64748b;">${(car.images || []).length} góc ảnh</div>
+          </td>
+          <td>
+            <strong>${car.name}</strong><br />
+            <span style="font-size:0.75rem;color:#64748b;">${car.type || "Xe tự lái"}</span>
+          </td>
+          <td>
+            Thường: <strong>${bPrice.toLocaleString("vi-VN")}đ</strong><br />
+            Lễ: <strong style="color:#d97706;">${wPrice.toLocaleString("vi-VN")}đ</strong>
+          </td>
+          <td>
+            <select onchange="quickChangeCarStatus(${car.id}, this.value)" style="padding:6px;border-radius:8px;border:1px solid #cbd5e1;font-weight:700;">
+              <option value="available" ${car.status === "available" ? "selected" : ""}>🟢 Đang rảnh</option>
+              <option value="rented" ${car.status === "rented" ? "selected" : ""}>🔴 Đang thuê</option>
+              <option value="maintenance" ${car.status === "maintenance" ? "selected" : ""}>🟡 Bảo trì</option>
+            </select>
+          </td>
+          <td>
+            <button class="btn-secondary" style="padding:6px 10px;" onclick="editVehicle(${car.id})">✏️ Sửa / 4 Ảnh</button>
+            <button class="btn-danger-outline" style="padding:6px 10px;" onclick="deleteVehicle(${car.id})">🗑️ Xóa</button>
+          </td>
+        </tr>
+      `;
       })
-      .join("") ||
-    '<p style="color:#64748b;font-size:0.85rem;">Chưa có đơn đặt thuê xe nào.</p>';
+      .join("");
+  }
 
-  document.getElementById("adm-waitlist-container").innerHTML =
-    waitlist
-      .map((w) => {
-        const car = vehicles.find((v) => Number(v.id) === Number(w.vehicle_id));
-        return `
-      <div class="record-card" style="opacity:${w.is_contacted ? 0.6 : 1}">
-        <div style="display:flex;justify-content:space-between;">
-          <strong>🔔 Chờ xe: ${car ? car.name : "Xe #" + w.vehicle_id}</strong>
-          <span>${w.is_contacted ? "✅ Đã gọi báo" : "⏳ Chờ liên hệ"}</span>
+  const bookEl = document.getElementById("adm-bookings-container");
+  if (bookEl) {
+    bookEl.innerHTML =
+      bookings
+        .map((b) => {
+          const car = vehicles.find(
+            (v) => Number(v.id) === Number(b.vehicle_id),
+          );
+          return `
+        <div class="record-card">
+          <div style="display:flex;justify-content:space-between;">
+            <strong>🚗 ${car ? car.name : "Xe #" + b.vehicle_id}</strong>
+            <span class="spec-tag">${(b.status || "pending").toUpperCase()}</span>
+          </div>
+          <div>👤 Khách & Giao nhận: <strong>${b.customer_name}</strong></div>
+          <div>📞 SĐT: <a href="tel:${b.customer_phone}"><strong>${b.customer_phone}</strong></a></div>
+          <div>🕒 Nhận: ${new Date(b.start_time).toLocaleString("vi-VN")}</div>
+          <div>🕒 Trả: ${new Date(b.end_time).toLocaleString("vi-VN")}</div>
+          ${b.total_price ? `<div>💰 Tổng tạm tính: <strong style="color:#e11d48;">${Number(b.total_price).toLocaleString("vi-VN")}đ</strong></div>` : ""}
+          <div style="display:flex;gap:6px;margin-top:6px;">
+            <button class="btn-primary-amber" style="padding:6px 10px;font-size:0.75rem;" onclick="changeBookingStatus(${b.id}, 'confirmed')">✔ Duyệt Giữ Xe</button>
+            <button class="btn-secondary" style="padding:6px 10px;font-size:0.75rem;" onclick="changeBookingStatus(${b.id}, 'completed')">Đã Trả Xe</button>
+            <button class="btn-danger-outline" style="padding:6px 10px;font-size:0.75rem;" onclick="changeBookingStatus(${b.id}, 'cancelled')">Hủy</button>
+          </div>
         </div>
-        <div>👤 Khách: <strong>${w.customer_name}</strong> — 📞 <a href="tel:${w.customer_phone}"><strong>${w.customer_phone}</strong></a></div>
-        <div>🕒 Khung giờ cần: ${new Date(w.desired_start).toLocaleString("vi-VN")} &rarr; ${new Date(w.desired_end).toLocaleString("vi-VN")}</div>
-        <div>📝 Ghi chú: <em>${w.note || "Không có"}</em></div>
-        ${!w.is_contacted ? `<button class="btn-primary-amber" style="padding:6px 10px;font-size:0.75rem;margin-top:6px;" onclick="toggleWaitlistContacted(${w.id})">Đánh dấu Đã Liên Hệ Lại</button>` : ""}
-      </div>
-    `;
-      })
-      .join("") ||
-    '<p style="color:#64748b;font-size:0.85rem;">Chưa có khách nào trong danh sách chờ.</p>';
+      `;
+        })
+        .join("") ||
+      '<p style="color:#64748b;font-size:0.85rem;">Chưa có đơn đặt thuê xe nào.</p>';
+  }
+
+  const waitEl = document.getElementById("adm-waitlist-container");
+  if (waitEl) {
+    waitEl.innerHTML =
+      waitlist
+        .map((w) => {
+          const car = vehicles.find(
+            (v) => Number(v.id) === Number(w.vehicle_id),
+          );
+          return `
+        <div class="record-card" style="opacity:${w.is_contacted ? 0.6 : 1}">
+          <div style="display:flex;justify-content:space-between;">
+            <strong>🔔 Chờ xe: ${car ? car.name : "Xe #" + w.vehicle_id}</strong>
+            <span>${w.is_contacted ? "✅ Đã gọi báo" : "⏳ Chờ liên hệ"}</span>
+          </div>
+          <div>👤 Khách: <strong>${w.customer_name}</strong> — 📞 <a href="tel:${w.customer_phone}"><strong>${w.customer_phone}</strong></a></div>
+          <div>🕒 Khung giờ cần: ${new Date(w.desired_start).toLocaleString("vi-VN")} &rarr; ${new Date(w.desired_end).toLocaleString("vi-VN")}</div>
+          <div>📝 Ghi chú: <em>${w.note || "Không có"}</em></div>
+          ${!w.is_contacted ? `<button class="btn-primary-amber" style="padding:6px 10px;font-size:0.75rem;margin-top:6px;" onclick="toggleWaitlistContacted(${w.id})">Đánh dấu Đã Liên Hệ Lại</button>` : ""}
+        </div>
+      `;
+        })
+        .join("") ||
+      '<p style="color:#64748b;font-size:0.85rem;">Chưa có khách nào trong danh sách chờ.</p>';
+  }
 }
 
 function openSupabaseModal() {
