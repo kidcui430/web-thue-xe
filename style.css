@@ -1429,31 +1429,193 @@ body {
   color: var(--slate-500);
 }
 
-@media (max-width: 960px) {
-  .search-inputs-grid,
+/* ==========================================================================
+   9. RESPONSIVE HOÀN CHỈNH CHO ĐIỆN THOẠI VÀ TABLET
+   ========================================================================== */
+
+/* Màn hình Tablet (iPad) */
+@media (max-width: 1024px) {
   .gallery-layout {
     grid-template-columns: 1fr;
+  }
+  .main-stage {
+    height: 320px;
   }
   .policy-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  .nav-links {
-    display: none;
-  }
-  .footer-grid {
+  .grid-2-col {
     grid-template-columns: 1fr;
   }
 }
-@media (max-width: 600px) {
-  .policy-grid,
+
+/* Màn hình Điện thoại (Mobile) */
+@media (max-width: 768px) {
+  /* Thu gọn Navbar */
+  .nav-links {
+    display: none;
+  } /* Ẩn menu chữ trên mobile */
+  .brand-text h1 {
+    font-size: 0.95rem;
+  }
+  .brand-sub {
+    font-size: 0.6rem;
+  }
+  .btn-hotline span:last-child {
+    display: none;
+  } /* Ẩn chữ Hotline, chỉ giữ icon */
+  .btn-hotline {
+    padding: 10px;
+    border-radius: 50%;
+  }
+  .btn-admin-shield {
+    width: 36px;
+    height: 36px;
+  }
+
+  /* Căn chỉnh Hero & Bảng tìm kiếm */
+  .hero-section {
+    padding: 40px 0 50px;
+  }
+  .hero-title {
+    font-size: 1.65rem;
+  }
+  .hero-subtitle {
+    font-size: 0.85rem;
+    padding: 0 10px;
+  }
+  .search-card {
+    padding: 20px 16px;
+    border-radius: 16px;
+  }
+  .search-inputs-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .search-card-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .search-btn-group {
+    flex-direction: column;
+    width: 100%;
+  }
+  .search-btn-group button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Bố cục danh sách & Bộ lọc */
+  .vehicles-grid {
+    grid-template-columns: 1fr;
+  }
+  .filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 16px;
+  }
+  .category-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 8px;
+  }
+  .tab-btn {
+    white-space: nowrap;
+  }
+  .sub-filters {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .sub-filter-item {
+    justify-content: space-between;
+  }
+  .avail-toggle-label {
+    justify-content: center;
+  }
+
+  /* Modals */
+  .modal-box {
+    padding: 20px 16px;
+    margin: 10px;
+    width: calc(100% - 20px);
+    border-radius: 16px;
+  }
   .modal-date-checker,
   .bhx-input-grid,
   .bhx-delivery-tabs {
     grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .thumbs-row {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+  }
+  .thumb-item {
+    height: 60px;
+  }
+  .bhx-gender-row {
+    justify-content: space-around;
+  }
+
+  /* Giao diện Admin Mobile */
+  .admin-section {
+    padding: 20px 10px 60px;
+  }
+  .admin-topbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .admin-top-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .admin-top-actions button {
+    flex: 1;
+    padding: 10px;
+    text-align: center;
+  }
+  .admin-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 8px;
+  }
+  .adm-tab {
+    white-space: nowrap;
+  }
+  .adm-form-grid {
+    grid-template-columns: 1fr;
+  }
+  .table-wrap {
+    margin: 0 -16px;
+    padding: 0 16px;
+  }
+  .records-list {
+    grid-template-columns: 1fr;
+  }
+
+  /* Footer */
+  .footer-grid {
+    grid-template-columns: 1fr;
+    gap: 32px;
+    text-align: center;
+  }
+  .footer-list {
+    align-items: center;
+  }
+}
+
+/* Màn hình Điện thoại siêu nhỏ */
+@media (max-width: 480px) {
+  .policy-grid {
+    grid-template-columns: 1fr;
   }
   .main-stage {
-    height: 250px;
+    height: 220px;
   }
+  .veh-actions {
+    grid-template-columns: 1fr;
+  } /* Nút trong thẻ xe xếp dọc */
 }
 
 /* Con mắt Hiện/Ẩn mật khẩu */
